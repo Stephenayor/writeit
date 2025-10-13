@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "598164158629",
+    "project_id": "writeit-e7e5b",
+    "storage_bucket": "writeit-e7e5b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598164158629:android:6579e25bb2bdd1e22a754c",
+        "android_client_info": {
+          "package_name": "com.example.writeit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "598164158629-gr236duv8fd755faijmq73eic5qi4ofe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.writeit",
+            "certificate_hash": "c790d5ef88b0bea3760226a3c87c61e0367881f8"
+          }
+        },
+        {
+          "client_id": "598164158629-oe280kcntj8jfd1p9bhpds039kmb6fh8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcrLxq-dP2iWb9K3ylGpE3uWAkHIcTvAA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "598164158629-oe280kcntj8jfd1p9bhpds039kmb6fh8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "598164158629-jf6tegp23ffpbsr1rsorp3lpvekul8rm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.writeit"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
