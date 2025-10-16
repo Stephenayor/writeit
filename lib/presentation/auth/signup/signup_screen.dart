@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:writeit/core/utils/dialogs/error_dialog.dart';
 import 'package:writeit/core/utils/routes.dart';
 import 'package:writeit/presentation/auth/signup/signup_state.dart';
-import '../../../core/app_colors.dart';
 import '../../../core/utils/pattern_painter.dart';
 import '../../../core/utils/dialogs/show_loading.dart';
 import '../../../providers/providers.dart';
@@ -32,6 +31,9 @@ class SignupScreen extends ConsumerWidget {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+
+      if (!viewModel.isNotInputValidation) {
         ErrorDialog.show(context, "Sign up Failed", next.errorMessage!);
       }
 

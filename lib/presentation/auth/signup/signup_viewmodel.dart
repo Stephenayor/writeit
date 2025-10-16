@@ -5,6 +5,7 @@ import '../../../data/repositories/auth_repository.dart';
 
 class SignupViewModel extends StateNotifier<SignupState> {
   final AuthRepository _authRepository;
+  late bool isNotInputValidation = true;
 
   SignupViewModel(this._authRepository) : super(SignupState());
 
@@ -28,6 +29,7 @@ class SignupViewModel extends StateNotifier<SignupState> {
     if (!_validateInputs()) return false;
 
     state = state.copyWith(isLoading: true, errorMessage: null);
+    isNotInputValidation = false;
 
     try {
       await _authRepository.signUpWithEmail(

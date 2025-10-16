@@ -39,6 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
             context.go(Routes.signIn);
           }
         });
+        // context.go(Routes.signIn);
       }
     });
   }
