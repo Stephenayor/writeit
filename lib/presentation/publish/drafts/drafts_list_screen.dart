@@ -8,14 +8,14 @@ import '../article_preview_screen.dart';
 import '../create_article_screen.dart';
 
 class DraftsListScreen extends ConsumerWidget {
-  const DraftsListScreen({Key? key}) : super(key: key);
+  DraftsListScreen({Key? key}) : super(key: key);
+  WidgetRef? widgetRef;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // final draftsAsync = ref.watch(draftsProvider);
-    // Mock data for now
-    final mockDrafts = _getMockDrafts();
+    final state = ref.read(draftsViewModelProvider);
+    widgetRef = ref;
 
     Future.microtask(
       () => ref.read(draftsViewModelProvider.notifier).loadDrafts(),
@@ -108,8 +108,6 @@ class DraftsListScreen extends ConsumerWidget {
       ),
       child: InkWell(
         onTap: () {
-          // Navigate to edit draft
-          // context.push('/create-article', extra: draft);
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -148,7 +146,7 @@ class DraftsListScreen extends ConsumerWidget {
                     ),
                     onSelected: (value) {
                       if (value == 'delete') {
-                        _showDeleteDialog(context, draft);
+                        _showDeleteDialog(context, widgetRef!, draft);
                       } else if (value == 'preview') {
                         Navigator.push(
                           context,
@@ -244,7 +242,9 @@ class DraftsListScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, Draft draft) {
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, Draft draft) {
+    final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -252,16 +252,28 @@ class DraftsListScreen extends ConsumerWidget {
         content: Text('Are you sure you want to delete "${draft.title}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              // TODO: Delete draft
-              Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Draft deleted')));
+            onPressed: () async {
+              context.pop(context);
+              await draftsViewModel.deleteDraft(draft.id);
+              final state = ref.read(draftsViewModelProvider);
+
+              if (state.error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Delete failed: ${state.error!}"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Draft Deleted Successfully')),
+              );
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -269,57 +281,4 @@ class DraftsListScreen extends ConsumerWidget {
       ),
     );
   }
-
-  List<Draft> _getMockDrafts() {
-    return [
-      Draft(
-        id: '1',
-        title: 'Getting Started with Flutter',
-        preview:
-            'Flutter is an amazing framework for building cross-platform applications. In this article, we\'ll explore...',
-        content:
-            '**Getting Started With Flutter**\n\nFlutter is an amazing framework...',
-        imagePaths: [],
-        updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      Draft(
-        id: '2',
-        title: 'My Travel Adventures',
-        preview:
-            'Last summer I visited the most beautiful places. Here are some highlights from my journey...',
-        content:
-            '**My Travel Adventures**\n\nLast summer I visited...\n[IMAGE:0]\n',
-        imagePaths: [],
-        updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      Draft(
-        id: '3',
-        title: '10 Tips for Better Writing',
-        preview:
-            'Want to improve your writing skills? Here are ten practical tips that will help you become a better writer...',
-        content:
-            '**10 Tips For Better Writing**\n\n1. Read daily\n2. Practice consistently...',
-        imagePaths: [],
-        updatedAt: DateTime.now().subtract(const Duration(days: 3)),
-      ),
-    ];
-  }
 }
-
-// class Draft {
-//   final String id;
-//   final String title;
-//   final String preview;
-//   final String content;
-//   final List<String> imagePaths;
-//   final DateTime updatedAt;
-//
-//   Draft({
-//     required this.id,
-//     required this.title,
-//     required this.preview,
-//     required this.content,
-//     required this.imagePaths,
-//     required this.updatedAt,
-//   });
-// }

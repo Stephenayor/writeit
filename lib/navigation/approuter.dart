@@ -38,7 +38,7 @@ final router = GoRouter(
     ),
     GoRoute(
       path: Routes.draftsListScreen,
-      builder: (context, state) => const DraftsListScreen(),
+      builder: (context, state) => DraftsListScreen(),
     ),
   ],
 );

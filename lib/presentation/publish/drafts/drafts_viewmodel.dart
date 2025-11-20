@@ -19,10 +19,8 @@ class DraftsViewModel extends StateNotifier<DraftSaveState> {
 
   Future<void> saveDraft(Draft draft) async {
     try {
-      // Start saving
       state = state.copyWith(isSaving: true, error: null);
 
-      // Persist draft
       await _draftRepository.saveDraft(draft);
 
       // Update list: replace if exists, otherwise add
@@ -35,19 +33,16 @@ class DraftsViewModel extends StateNotifier<DraftSaveState> {
         updatedList.add(draft);
       }
 
-      // Success → save draft list
-      state = state.copyWith(
-        isSaving: false,
-        draft: updatedList, // Success holds the updated drafts list
-      );
+      // when it succeeds, save drafts list
+      state = state.copyWith(isSaving: false, draft: updatedList);
     } catch (e) {
-      // Error
       state = state.copyWith(isSaving: false, error: e.toString());
     }
   }
 
   Future<void> deleteDraft(String id) async {
     try {
+      state = state.copyWith(isDeleting: true, error: null);
       await _draftRepository.deleteDraft(id);
 
       final updated = state.draft.where((d) => d.id != id).toList();
