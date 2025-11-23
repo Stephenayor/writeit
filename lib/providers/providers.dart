@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:writeit/core/di/locator.dart';
+import 'package:writeit/core/network/api_response.dart';
 import 'package:writeit/data/repositories/auth_repository.dart';
 import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
 import '../data/models/draft.dart';
+import '../data/repositories/article_repository.dart';
 import '../data/repositories/draft_repository.dart';
 import '../domain/repo/AuthRepositoryImpl.dart';
 import '../domain/repo/DraftRepositoryImpl.dart';
@@ -11,6 +13,7 @@ import '../presentation/auth/signin/signin_state.dart';
 import '../presentation/auth/signin/signinviewmodel.dart';
 import '../presentation/auth/signup/signup_state.dart';
 import '../presentation/auth/signup/signup_viewmodel.dart';
+import '../presentation/publish/create_article_viewmodel.dart';
 import '../presentation/publish/drafts/drafts_viewmodel.dart';
 
 final signupViewModelProvider =
@@ -32,4 +35,10 @@ final draftsViewModelProvider =
     StateNotifierProvider<DraftsViewModel, DraftSaveState>((ref) {
       final repo = getIt<DraftRepository>();
       return DraftsViewModel(repo);
+    });
+
+final articlePublishProvider =
+    StateNotifierProvider<CreateArticleViewModel, ApiResponse<String>>((ref) {
+      final repo = getIt<ArticleRepository>();
+      return CreateArticleViewModel(repo);
     });

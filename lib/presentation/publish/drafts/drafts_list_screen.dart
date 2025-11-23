@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:writeit/core/utils/routes.dart';
 import 'package:writeit/providers/providers.dart';
 import '../../../data/models/draft.dart';
 import '../article_preview_screen.dart';
@@ -56,7 +57,7 @@ class DraftsListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // Navigate to create new article
-          context.push('/create-article');
+          context.push(Routes.createArticleScreen);
         },
         backgroundColor: const Color(0xFF4CAF50),
         icon: const Icon(Icons.add, color: Colors.white),
