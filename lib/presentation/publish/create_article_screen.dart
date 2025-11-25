@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:writeit/core/utils/routes.dart';
+import 'package:writeit/core/utils/view/image_marker_text_editing_controller.dart';
 import 'dart:io';
 import '../../core/network/api_response.dart';
+import '../../core/utils/helper/image_persistence_helper.dart';
+import '../../core/utils/persist_image.dart';
 import '../../data/models/draft.dart';
 import '../../providers/providers.dart';
 import 'article_preview_screen.dart';
@@ -29,7 +33,8 @@ class CreateArticleScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
-  final TextEditingController _controller = TextEditingController();
+  final ImageMarkerTextEditingController _controller =
+      ImageMarkerTextEditingController();
   final FocusNode _focusNode = FocusNode();
   final ImagePicker _imagePicker = ImagePicker();
   final List<String> _images = [];
@@ -54,20 +59,194 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       _isFirstLine = false;
     }
 
-    if (widget.draftId != null) {
-      final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
-      final loadedDraft = draftsViewModel.getDraftById(widget.draftId!);
+    // if (widget.existingImages != null && widget.existingImages!.isNotEmpty) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) async {
+    //     final validImages = <String>[];
+    //     final invalidIndices = <int>[];
+    //
+    //     for (int i = 0; i < widget.existingImages!.length; i++) {
+    //       final path = widget.existingImages![i];
+    //
+    //       // Check if image file exists
+    //       if (await ImagePersistenceHelper.imageExists(path)) {
+    //         validImages.add(path);
+    //       } else {
+    //         invalidIndices.add(i);
+    //         if (kDebugMode) {
+    //           print("Draft image not found, removing: $path");
+    //         }
+    //       }
+    //     }
+    //
+    //     if (mounted) {
+    //       setState(() {
+    //         _images.clear();
+    //         _images.addAll(validImages);
+    //       });
+    //
+    //       // Remove invalid image markers from content
+    //       if (invalidIndices.isNotEmpty) {
+    //         String updatedContent = _controller.text;
+    //
+    //         // Remove markers for invalid images (in reverse to maintain indices)
+    //         for (final index in invalidIndices.reversed) {
+    //           final marker = '[IMAGE:$index]';
+    //           updatedContent = updatedContent.replaceAll('\n$marker\n', '\n');
+    //           updatedContent = updatedContent.replaceAll(marker, '');
+    //         }
+    //
+    //         // Renumber remaining markers
+    //         for (int i = 0; i < validImages.length; i++) {
+    //           // Find old marker index
+    //           int oldIndex = i;
+    //           for (final invalidIdx in invalidIndices) {
+    //             if (invalidIdx <= i) oldIndex++;
+    //           }
+    //
+    //           if (oldIndex != i) {
+    //             final oldMarker = '[IMAGE:$oldIndex]';
+    //             final newMarker = '[IMAGE:$i]';
+    //             updatedContent = updatedContent.replaceFirst(
+    //               oldMarker,
+    //               newMarker,
+    //             );
+    //           }
+    //         }
+    //
+    //         _controller.text = updatedContent;
+    //
+    //         // Show message if images were removed
+    //         if (mounted && invalidIndices.isNotEmpty) {
+    //           ScaffoldMessenger.of(context).showSnackBar(
+    //             SnackBar(
+    //               content: Text(
+    //                 '${invalidIndices.length} image(s) could not be loaded',
+    //               ),
+    //             ),
+    //           );
+    //         }
+    //       }
+    //     }
+    //   });
+    // }
 
-      if (loadedDraft != null) {
-        _controller.text = loadedDraft.content;
-        _images.addAll(widget.existingImages!);
-        _isFirstLine = false;
-      }
+    if (widget.existingImages != null && widget.existingImages!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // Validate all images and convert to filenames
+        final validFilenames = await ImagePersistenceHelper.validateImagePaths(
+          widget.existingImages!,
+        );
+
+        final invalidCount =
+            widget.existingImages!.length - validFilenames.length;
+
+        if (mounted) {
+          setState(() {
+            _images.clear();
+            _images.addAll(validFilenames);
+          });
+
+          // If some images were invalid, update the content
+          if (invalidCount > 0) {
+            String updatedContent = _controller.text;
+
+            // Remove markers for invalid images
+            final allIndices = List.generate(
+              widget.existingImages!.length,
+              (i) => i,
+            );
+            final validIndices = List.generate(validFilenames.length, (i) => i);
+            final invalidIndices = allIndices
+                .where((i) => i >= validFilenames.length)
+                .toList();
+
+            for (final index in invalidIndices.reversed) {
+              final marker = '[IMAGE:$index]';
+              updatedContent = updatedContent.replaceAll('\n$marker\n', '\n');
+              updatedContent = updatedContent.replaceAll(marker, '');
+            }
+
+            // Renumber remaining markers
+            for (int i = 0; i < validFilenames.length; i++) {
+              final oldMarker = '[IMAGE:${allIndices[i]}]';
+              final newMarker = '[IMAGE:$i]';
+              updatedContent = updatedContent.replaceFirst(
+                oldMarker,
+                newMarker,
+              );
+            }
+
+            _controller.text = updatedContent;
+
+            // Show notification
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$invalidCount image(s) could not be loaded'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+
+          // Debug: Print loaded images
+          if (kDebugMode) {
+            print('=== Loaded Images ===');
+            for (int i = 0; i < _images.length; i++) {
+              print('Image $i: ${_images[i]}');
+            }
+            print('====================');
+          }
+
+          // Force rebuild to show images
+          setState(() {});
+        }
+      });
     }
+
+    // if (widget.draftId != null) {
+    //   final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
+    //   final loadedDraft = draftsViewModel.getDraftById(widget.draftId!);
+    //
+    //   if (loadedDraft != null) {
+    //     _controller.text = loadedDraft.content;
+    //     // _images.addAll(widget.existingImages!);
+    //     _isFirstLine = false;
+    //   }
+    // }
 
     if (widget.existingImages != null) {
-      _images.addAll(widget.existingImages!);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final cleaned = <String>[];
+        for (final path in widget.existingImages!) {
+          if (File(path).existsSync()) {
+            _images.add(path);
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _images.clear();
+            _images.addAll(cleaned);
+          });
+        }
+      });
     }
+
+    Future.microtask(() async {
+      if (widget.draftId != null) {
+        final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
+
+        final fixedDraft = Draft(
+          id: widget.draftId!,
+          title: _extractTitle(),
+          content: _controller.text,
+          imagePaths: List.from(_images),
+          updatedAt: DateTime.now(),
+          preview: _extractTitle(),
+        );
+
+        await draftsViewModel.saveDraft(fixedDraft);
+      }
+    });
 
     _currentDraftId =
         widget.draftId ?? DateTime.now().millisecondsSinceEpoch.toString();
@@ -82,6 +261,36 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       const Duration(minutes: 1),
       (_) => _autoSaveBackground(),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _debugImageState();
+      // Force a rebuild to show images
+      if (mounted && _images.isNotEmpty) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    // Force rebuild of image widgets
+  }
+
+  void _debugImageState() {
+    if (kDebugMode) {
+      print('=== Image Debug Info ===');
+      print('Total images: ${_images.length}');
+      for (int i = 0; i < _images.length; i++) {
+        final path = _images[i];
+        final exists = File(path).existsSync();
+        print('Image $i: ${path.split('/').last} - Exists: $exists');
+      }
+      print(
+        'Text contains IMAGE markers: ${_controller.text.contains('[IMAGE:')}',
+      );
+      print('=======================');
+    }
   }
 
   @override
@@ -258,6 +467,38 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     );
   }
 
+  // Future<void> _pickImage() async {
+  //   final XFile? image = await _imagePicker.pickImage(
+  //     source: ImageSource.gallery,
+  //     imageQuality: 80,
+  //   );
+  //
+  //   if (image != null) {
+  //     final cursorPos = _controller.selection.base.offset;
+  //     final text = _controller.text;
+  //
+  //     final imageMarker = '\n[IMAGE:${_images.length}]\n';
+  //     final newText =
+  //         text.substring(0, cursorPos) +
+  //         imageMarker +
+  //         text.substring(cursorPos);
+  //
+  //     setState(() {
+  //       _images.add(image.path);
+  //     });
+  //
+  //     _controller.value = TextEditingValue(
+  //       text: newText,
+  //       selection: TextSelection.collapsed(
+  //         offset: cursorPos + imageMarker.length,
+  //       ),
+  //     );
+  //
+  //     _focusNode.requestFocus();
+  //     scheduleAutoSave();
+  //   }
+  // }
+
   Future<void> _pickImage() async {
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -265,28 +506,51 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     );
 
     if (image != null) {
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Loading image...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+
+      // Persist image and get FILENAME only (not full path)
+      final filename = await ImagePersistenceHelper.persistImage(image.path);
+
+      if (filename.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to load image. Try again.")),
+          );
+        }
+        return;
+      }
+
       final cursorPos = _controller.selection.base.offset;
       final text = _controller.text;
 
       final imageMarker = '\n[IMAGE:${_images.length}]\n';
-      final newText =
-          text.substring(0, cursorPos) +
-          imageMarker +
-          text.substring(cursorPos);
 
       setState(() {
-        _images.add(image.path);
+        _images.add(filename); // Store ONLY filename
       });
 
       _controller.value = TextEditingValue(
-        text: newText,
+        text:
+            text.substring(0, cursorPos) +
+            imageMarker +
+            text.substring(cursorPos),
         selection: TextSelection.collapsed(
           offset: cursorPos + imageMarker.length,
         ),
       );
 
       _focusNode.requestFocus();
-      scheduleAutoSave();
+
+      // Auto-save after adding image
+      await _saveToDrafts(silent: true);
     }
   }
 
@@ -729,57 +993,217 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     return false;
   }
 
+  // Widget _buildContentWithImages(bool isDark) {
+  //   final text = _controller.text;
+  //   final lines = text.split('\n');
+  //   final widgets = <Widget>[];
+  //
+  //   for (final line in lines) {
+  //     final imageMatch = RegExp(r'\[IMAGE:(\d+)\]').firstMatch(line);
+  //
+  //     if (imageMatch != null) {
+  //       final imageIndex = int.parse(imageMatch.group(1)!);
+  //       if (imageIndex < _images.length) {
+  //         widgets.add(
+  //           Container(
+  //             margin: const EdgeInsets.symmetric(vertical: 8),
+  //             child: Stack(
+  //               children: [
+  //                 ClipRRect(
+  //                   borderRadius: BorderRadius.circular(8),
+  //                   child: Image.file(
+  //                     File(_images[imageIndex]),
+  //                     fit: BoxFit.cover,
+  //                     width: double.infinity,
+  //                   ),
+  //                 ),
+  //                 Positioned(
+  //                   top: 8,
+  //                   right: 8,
+  //                   child: IconButton(
+  //                     icon: const Icon(
+  //                       Icons.close,
+  //                       color: Colors.white,
+  //                       size: 20,
+  //                     ),
+  //                     style: IconButton.styleFrom(
+  //                       backgroundColor: Colors.black54,
+  //                       padding: const EdgeInsets.all(4),
+  //                       minimumSize: const Size(28, 28),
+  //                     ),
+  //                     onPressed: () async {
+  //                       final removedImage = _images[imageIndex];
+  //                       setState(() {
+  //                         final marker = '[IMAGE:$imageIndex]';
+  //                         _controller.text = _controller.text.replaceAll(
+  //                           '\n$marker\n',
+  //                           '\n',
+  //                         );
+  //                         _images.removeAt(imageIndex);
+  //                       });
+  //
+  //                       //delete persisted file
+  //                       final file = File(removedImage);
+  //                       if (await file.exists()) {
+  //                         await file.delete();
+  //                       }
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   }
+  //
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: widgets,
+  //   );
+  // }
+
+  // Replace your _buildContentWithImages method with this:
+
   Widget _buildContentWithImages(bool isDark) {
     final text = _controller.text;
+
+    if (!text.contains('[IMAGE:')) {
+      return const SizedBox.shrink();
+    }
+
     final lines = text.split('\n');
     final widgets = <Widget>[];
 
     for (final line in lines) {
-      final imageMatch = RegExp(r'\[IMAGE:(\d+)\]').firstMatch(line);
+      final imageMatch = RegExp(r'\[IMAGE:(\d+)\]').firstMatch(line.trim());
 
       if (imageMatch != null) {
         final imageIndex = int.parse(imageMatch.group(1)!);
+
         if (imageIndex < _images.length) {
+          final filename = _images[imageIndex];
+
           widgets.add(
             Container(
+              key: ValueKey('image_$imageIndex\_$filename'),
               margin: const EdgeInsets.symmetric(vertical: 8),
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(_images[imageIndex]),
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 20,
+              child: FutureBuilder<File?>(
+                future: ImagePersistenceHelper.getImageFile(filename),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black54,
-                        padding: const EdgeInsets.all(4),
-                        minimumSize: const Size(28, 28),
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (snapshot.data == null) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red, width: 2),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          final marker = '[IMAGE:$imageIndex]';
-                          _controller.text = _controller.text.replaceAll(
-                            '\n$marker\n',
-                            '\n',
-                          );
-                          _images.removeAt(imageIndex);
-                        });
-                      },
-                    ),
-                  ),
-                ],
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Image not found',
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () => _removeImage(imageIndex),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            if (kDebugMode) {
+                              print('Error loading image: $error');
+                            }
+                            return Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.grey[800]
+                                    : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error,
+                                      size: 48,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Error loading image'),
+                                    ElevatedButton(
+                                      onPressed: () => _removeImage(imageIndex),
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            padding: const EdgeInsets.all(6),
+                          ),
+                          onPressed: () => _removeImage(imageIndex),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           );
@@ -791,6 +1215,39 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: widgets,
     );
+  }
+
+  // Update your _removeImage method:
+  void _removeImage(int index) {
+    if (index >= _images.length) return;
+
+    final imagePath = _images[index];
+    final marker = '[IMAGE:$index]';
+
+    setState(() {
+      // Remove marker from text
+      String updatedText = _controller.text;
+      updatedText = updatedText.replaceAll('\n$marker\n', '\n');
+      updatedText = updatedText.replaceAll(marker, '');
+
+      // Remove image from list
+      _images.removeAt(index);
+
+      // Renumber subsequent image markers
+      for (int i = index; i < _images.length; i++) {
+        final oldMarker = '[IMAGE:${i + 1}]';
+        final newMarker = '[IMAGE:$i]';
+        updatedText = updatedText.replaceAll(oldMarker, newMarker);
+      }
+
+      _controller.text = updatedText;
+    });
+
+    // Optionally delete from storage
+    ImagePersistenceHelper.deleteImage(imagePath);
+
+    // Auto-save
+    _saveToDrafts(silent: true);
   }
 
   Widget _buildRichEditor(bool isDark) {
@@ -947,16 +1404,37 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
           const SizedBox(width: 8),
         ],
       ),
+
+      // Replace your entire body Column with this:
       body: Column(
         children: [
+          // Save status indicator (optional)
+          if (_saveStatus.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              color: Colors.green.withOpacity(0.1),
+              child: Text(
+                _saveStatus,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Render images first (they will show where [IMAGE:X] markers are)
                   _buildContentWithImages(isDark),
 
+                  // Text editor
                   RawKeyboardListener(
                     focusNode: FocusNode(),
                     onKey: (event) {
@@ -984,21 +1462,26 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
                           fontSize: 18,
                           color: isDark ? Colors.grey[600] : Colors.grey[400],
                         ),
-                        border: OutlineInputBorder(),
+                        border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                         isDense: true,
                       ),
+                      onChanged: (text) {
+                        if (text.contains('[IMAGE:')) {
+                          setState(() {});
+                        }
+                      },
                     ),
                   ),
-
                   const SizedBox(height: 300),
                 ],
               ),
             ),
           ),
 
+          // Toolbar remains the same...
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -1053,47 +1536,153 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
               ],
             ),
           ),
-
-          if (saveState.isSaving)
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text(
-                "Saving...",
-                style: TextStyle(fontSize: 12, color: Colors.orange),
-              ),
-            ),
-
-          if (saveState.draft.isNotEmpty && _saveStatus.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                "Saved",
-                style: TextStyle(fontSize: 12, color: Colors.green),
-              ),
-            ),
-
-          if (saveState.error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                "Error: ${saveState.error}",
-                style: TextStyle(fontSize: 12, color: Colors.red),
-              ),
-            ),
-          if (_lastSavedTime != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                "Last saved at ${_formatTime(_lastSavedTime!)}",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.grey[500] : Colors.grey[600],
-                ),
-              ),
-            ),
         ],
       ),
     );
+  }
+
+  // New helper method to build image widgets:
+  List<Widget> _buildImageWidgets(bool isDark) {
+    final text = _controller.text;
+
+    if (!text.contains('[IMAGE:')) {
+      return [];
+    }
+
+    final lines = text.split('\n');
+    final widgets = <Widget>[];
+    int currentLine = 0;
+
+    for (final line in lines) {
+      final imageMatch = RegExp(r'\[IMAGE:(\d+)\]').firstMatch(line.trim());
+
+      if (imageMatch != null) {
+        final imageIndex = int.parse(imageMatch.group(1)!);
+
+        if (imageIndex < _images.length) {
+          final imagePath = _images[imageIndex];
+          final imageFile = File(imagePath);
+
+          // Add spacing based on line position
+          double topMargin = currentLine * 28.0; // Approximate line height
+
+          widgets.add(
+            Padding(
+              padding: EdgeInsets.only(top: topMargin, bottom: 8),
+              child: FutureBuilder<bool>(
+                key: ValueKey('image_$imageIndex\_${imagePath.hashCode}'),
+                future: imageFile.exists(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (snapshot.data != true) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red, width: 2),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Image not found',
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => _removeImage(imageIndex),
+                              child: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          imageFile,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: Colors.red.withOpacity(0.1),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error,
+                                      size: 48,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Error loading image'),
+                                    TextButton(
+                                      onPressed: () => _removeImage(imageIndex),
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            padding: const EdgeInsets.all(6),
+                          ),
+                          onPressed: () => _removeImage(imageIndex),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
+        }
+      }
+
+      currentLine++;
+    }
+
+    return widgets;
   }
 
   Future<void> onPublish() async {

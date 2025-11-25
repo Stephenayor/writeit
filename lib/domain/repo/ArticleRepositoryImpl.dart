@@ -114,7 +114,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
       }
 
       final fileName =
-          '$articleTitle${DateTime.now().millisecondsSinceEpoch}${_auth.currentUser?.displayName}_$i.jpg';
+          '$articleTitle${DateTime.now()}${_auth.currentUser?.displayName}_$i.jpg';
       final firebaseStorageRef = _storage.ref(
         'article_images/$authorId/$articleId/$fileName',
       );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:writeit/core/utils/routes.dart';
 import 'package:writeit/providers/providers.dart';
+import '../../../core/utils/helper/image_persistence_helper.dart';
 import '../../../data/models/draft.dart';
 import '../article_preview_screen.dart';
 import '../create_article_screen.dart';
@@ -258,7 +259,11 @@ class DraftsListScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () async {
-              context.pop(context);
+              // Delete draft images from storage
+              for (final imagePath in draft.imagePaths) {
+                await ImagePersistenceHelper.deleteImage(imagePath);
+              }
+              context.pop();
               await draftsViewModel.deleteDraft(draft.id);
               final state = ref.read(draftsViewModelProvider);
 
@@ -281,5 +286,17 @@ class DraftsListScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> cleanupOrphanedImages(WidgetRef ref) async {
+    final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
+    final allDrafts = draftsViewModel.state.draft;
+
+    final referencedPaths = <String>[];
+    for (final draft in allDrafts) {
+      referencedPaths.addAll(draft.imagePaths);
+    }
+
+    await ImagePersistenceHelper.cleanupUnusedImages(referencedPaths);
   }
 }
