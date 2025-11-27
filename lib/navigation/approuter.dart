@@ -6,6 +6,8 @@ import 'package:writeit/presentation/home/home_screen.dart';
 import 'package:writeit/presentation/publish/create_article_screen.dart';
 import 'package:writeit/presentation/publish/drafts/drafts_list_screen.dart';
 import '../core/utils/routes.dart';
+import '../data/models/article.dart';
+import '../presentation/publish/detail/article_detail_screen.dart';
 import '../splash_screen.dart';
 
 final router = GoRouter(
@@ -39,6 +41,13 @@ final router = GoRouter(
     GoRoute(
       path: Routes.draftsListScreen,
       builder: (context, state) => DraftsListScreen(),
+    ),
+    GoRoute(
+      path: Routes.articlesDetailScreen,
+      builder: (context, state) {
+        final article = state.extra as Article;
+        return ArticleDetailScreen(article: article);
+      },
     ),
   ],
 );

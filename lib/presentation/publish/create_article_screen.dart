@@ -1347,11 +1347,11 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
     ref.listen<ApiResponse<String>>(articlePublishProvider, (previous, next) {
       if (next is Success<String>) {
+        // final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
+        // draftsViewModel.deleteDraft(widget.draftId!);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Article published successfully')),
         );
-        final draftsViewModel = ref.read(draftsViewModelProvider.notifier);
-        draftsViewModel.deleteDraft(widget.draftId!);
         context.go(Routes.home);
       } else if (next is Failure<String>) {
         ScaffoldMessenger.of(
@@ -1733,3 +1733,1036 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     );
   }
 }
+
+// import 'dart:async';
+// import 'dart:io';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:go_router/go_router.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:writeit/core/utils/routes.dart';
+// import '../../core/network/api_response.dart';
+// import '../../core/utils/helper/image_persistence_helper.dart';
+// import '../../data/models/draft.dart';
+// import '../../providers/providers.dart';
+// import 'article_preview_screen.dart';
+//
+// class CreateArticleScreen extends ConsumerStatefulWidget {
+//   final String? draftId;
+//   final String? existingContent;
+//   final List<String>? existingImages;
+//
+//   const CreateArticleScreen({
+//     Key? key,
+//     this.draftId,
+//     this.existingContent,
+//     this.existingImages,
+//   }) : super(key: key);
+//
+//   @override
+//   ConsumerState<CreateArticleScreen> createState() =>
+//       _CreateArticleScreenState();
+// }
+//
+// class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
+//   /// Rich text controller from super_editor.
+//   /// We still store plain markdown-ish text under the hood so that:
+//   /// - drafts
+//   /// - preview
+//   /// - repository
+//   /// keep working as-is.
+//   late final TextEditingController _textController;
+//
+//   final FocusNode _focusNode = FocusNode();
+//   final ImagePicker _imagePicker = ImagePicker();
+//
+//   /// Local *filenames* (not full paths). We resolve to File via ImagePersistenceHelper when needed.
+//   final List<String> _imageFilenames = [];
+//
+//   bool _isFirstLine = true;
+//   String? _currentDraftId;
+//
+//   Timer? _debounceAutoSaveTimer;
+//   Timer? _backgroundAutoSaveTimer;
+//   Timer? _saveStatusClearTimer;
+//
+//   String? _lastSavedContent;
+//   String _saveStatus = "";
+//   bool _hasSavedOnce = false;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//
+//     final initialText = widget.existingContent ?? '';
+//
+//     _textController = TextEditingController(text: initialText);
+//
+//     if (initialText.isNotEmpty) {
+//       _isFirstLine = false;
+//     }
+//
+//     // Load existing images from draft (filenames or paths)
+//     if (widget.existingImages != null && widget.existingImages!.isNotEmpty) {
+//       WidgetsBinding.instance.addPostFrameCallback((_) async {
+//         // Validate / normalize to filenames
+//         final validFilenames = await ImagePersistenceHelper.validateImagePaths(
+//           widget.existingImages!,
+//         );
+//         final invalidCount =
+//             widget.existingImages!.length - validFilenames.length;
+//
+//         setState(() {
+//           _imageFilenames
+//             ..clear()
+//             ..addAll(validFilenames);
+//         });
+//
+//         // If some are invalid, we should remove their markers.
+//         if (invalidCount > 0) {
+//           String updated = _textController.text;
+//
+//           final allIndices = List.generate(
+//             widget.existingImages!.length,
+//             (i) => i,
+//           );
+//           final invalidIndices = allIndices
+//               .where((i) => i >= validFilenames.length)
+//               .toList();
+//
+//           for (final idx in invalidIndices.reversed) {
+//             final marker = '[IMAGE:$idx]';
+//             updated = updated.replaceAll('\n$marker\n', '\n');
+//             updated = updated.replaceAll(marker, '');
+//           }
+//
+//           // Re-number remaining markers
+//           for (int i = 0; i < validFilenames.length; i++) {
+//             final oldMarker = '[IMAGE:${allIndices[i]}]';
+//             final newMarker = '[IMAGE:$i]';
+//             updated = updated.replaceFirst(oldMarker, newMarker);
+//           }
+//
+//           _setPlainText(updated);
+//
+//           if (mounted) {
+//             ScaffoldMessenger.of(context).showSnackBar(
+//               SnackBar(
+//                 content: Text('$invalidCount image(s) could not be loaded'),
+//                 backgroundColor: Colors.orange,
+//               ),
+//             );
+//           }
+//         }
+//
+//         if (kDebugMode) {
+//           print('=== Loaded draft images ===');
+//           for (int i = 0; i < _imageFilenames.length; i++) {
+//             print('Image $i: ${_imageFilenames[i]}');
+//           }
+//           print('===========================');
+//         }
+//       });
+//     }
+//
+//     _currentDraftId =
+//         widget.draftId ?? DateTime.now().millisecondsSinceEpoch.toString();
+//
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _focusNode.requestFocus();
+//     });
+//
+//     // Background auto-save every 1 minute (only if content changed)
+//     _backgroundAutoSaveTimer = Timer.periodic(
+//       const Duration(minutes: 1),
+//       (_) => _autoSaveBackground(),
+//     );
+//
+//     // Initial debug
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _debugImageState();
+//     });
+//   }
+//
+//   void _onTextChanged() {
+//     _scheduleAutoSave(); // what you were doing in onChanged
+//     setState(() {}); // so the hint hides/shows correctly
+//   }
+//
+//   @override
+//   void dispose() {
+//     _focusNode.dispose();
+//     _debounceAutoSaveTimer?.cancel();
+//     _backgroundAutoSaveTimer?.cancel();
+//     _saveStatusClearTimer?.cancel();
+//     _textController.dispose();
+//     super.dispose();
+//   }
+//
+//   // ====== Helpers around the rich text controller ======
+//
+//   String get _plainText => _textController.text;
+//
+//   void _setPlainText(String value, {int? cursorOffset}) {
+//     final offset =
+//         cursorOffset ?? value.length.clamp(0, value.length); // safe clamp
+//
+//     _textController
+//       ..text = TextEditingController() as String
+//       ..selection = TextSelection.collapsed(offset: offset);
+//   }
+//
+//   void _debugImageState() {
+//     if (!kDebugMode) return;
+//
+//     print('=== Draft Editor Debug ===');
+//     print('Text length: ${_plainText.length}');
+//     print('Contains IMAGE markers: ${_plainText.contains('[IMAGE:')}');
+//     print('Image filenames: $_imageFilenames');
+//     print('==========================');
+//   }
+//
+//   // ====== Title extraction ======
+//
+//   String _extractTitle() {
+//     final lines = _plainText.split('\n');
+//     for (final line in lines) {
+//       final cleaned = line.replaceAll('**', '').trim();
+//       if (cleaned.isNotEmpty && !cleaned.startsWith('[IMAGE:')) {
+//         return cleaned;
+//       }
+//     }
+//     return 'Untitled Article';
+//   }
+//
+//   String _capitalizeWords(String text) {
+//     return text
+//         .split(' ')
+//         .map((w) {
+//           if (w.isEmpty) return w;
+//           return w[0].toUpperCase() + w.substring(1).toLowerCase();
+//         })
+//         .join(' ');
+//   }
+//
+//   // ====== Draft saving (debounced, quiet) ======
+//
+//   void _scheduleAutoSave() {
+//     _debounceAutoSaveTimer?.cancel();
+//     _debounceAutoSaveTimer = Timer(const Duration(seconds: 8), () {
+//       _saveToDrafts(silent: true);
+//     });
+//   }
+//
+//   Future<void> _autoSaveBackground() async {
+//     final content = _plainText.trim();
+//     if (content.isEmpty) return;
+//     if (_lastSavedContent == content) return;
+//
+//     await _saveToDrafts(silent: true);
+//   }
+//
+//   Future<void> _saveToDrafts({bool silent = false}) async {
+//     final draftsVM = ref.read(draftsViewModelProvider.notifier);
+//     final content = _plainText;
+//
+//     if (content.trim().isEmpty) {
+//       if (!silent) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text('Cannot save empty article')),
+//         );
+//       }
+//       return;
+//     }
+//
+//     final draft = Draft(
+//       id: _currentDraftId!,
+//       title: _extractTitle(),
+//       content: content,
+//       imagePaths: List<String>.from(_imageFilenames),
+//       updatedAt: DateTime.now(),
+//       preview: _extractTitle(),
+//     );
+//
+//     await draftsVM.saveDraft(draft);
+//
+//     final state = ref.read(draftsViewModelProvider);
+//
+//     if (state.error != null && !silent) {
+//       ScaffoldMessenger.of(
+//         context,
+//       ).showSnackBar(SnackBar(content: Text(state.error!)));
+//     }
+//
+//     setState(() {
+//       _lastSavedContent = content;
+//       _saveStatus = "Saved";
+//       _hasSavedOnce = true;
+//     });
+//
+//     _saveStatusClearTimer?.cancel();
+//     _saveStatusClearTimer = Timer(const Duration(seconds: 3), () {
+//       if (mounted) {
+//         setState(() => _saveStatus = "");
+//       }
+//     });
+//
+//     if (!silent) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('Saved to drafts: ${_extractTitle()}')),
+//       );
+//     }
+//   }
+//
+//   // ====== Image picking & markers ======
+//
+//   Future<void> _pickImage() async {
+//     final XFile? picked = await _imagePicker.pickImage(
+//       source: ImageSource.gallery,
+//       imageQuality: 80,
+//     );
+//
+//     if (picked == null) return;
+//
+//     // tiny toast-like SnackBar just once
+//     if (mounted) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('Loading image...'),
+//           duration: Duration(seconds: 1),
+//         ),
+//       );
+//     }
+//
+//     final filename = await ImagePersistenceHelper.persistImage(
+//       picked.path,
+//     ); // returns name
+//
+//     if (filename.isEmpty) {
+//       if (mounted) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text('Failed to load image. Try again.')),
+//         );
+//       }
+//       return;
+//     }
+//
+//     setState(() {
+//       _imageFilenames.add(filename);
+//     });
+//
+//     // Insert marker at caret
+//     final markerIndex = _imageFilenames.length - 1;
+//     final marker = '\n[IMAGE:$markerIndex]\n';
+//
+//     final selection = _textController.selection;
+//     final baseOffset = selection.isValid
+//         ? selection.baseOffset
+//         : _plainText.length;
+//
+//     final text = _plainText;
+//     final newText =
+//         text.substring(0, baseOffset) + marker + text.substring(baseOffset);
+//
+//     final newCursorOffset = baseOffset + marker.length;
+//
+//     _setPlainText(newText, cursorOffset: newCursorOffset);
+//
+//     _scheduleAutoSave();
+//   }
+//
+//   void _removeImage(int index) {
+//     if (index < 0 || index >= _imageFilenames.length) return;
+//     final removed = _imageFilenames[index];
+//
+//     setState(() {
+//       String updated = _plainText;
+//       final marker = '[IMAGE:$index]';
+//
+//       updated = updated.replaceAll('\n$marker\n', '\n');
+//       updated = updated.replaceAll(marker, '');
+//
+//       // Renumber markers
+//       for (int i = index + 1; i < _imageFilenames.length; i++) {
+//         final oldMarker = '[IMAGE:$i]';
+//         final newMarker = '[IMAGE:${i - 1}]';
+//         updated = updated.replaceAll(oldMarker, newMarker);
+//       }
+//
+//       _imageFilenames.removeAt(index);
+//       _setPlainText(updated);
+//     });
+//
+//     // Delete file on disk
+//     ImagePersistenceHelper.deleteImage(removed);
+//
+//     _scheduleAutoSave();
+//   }
+//
+//   // ====== Formatting helpers (operate on plain text + selection) ======
+//
+//   TextSelection get _selection => _textController.selection;
+//
+//   bool get _hasSelection => _selection.isValid && !_selection.isCollapsed;
+//
+//   void _showSelectTextSnack() {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       const SnackBar(
+//         content: Text('Please select text first'),
+//         duration: Duration(seconds: 1),
+//       ),
+//     );
+//   }
+//
+//   void _toggleBold() {
+//     if (!_hasSelection) {
+//       _showSelectTextSnack();
+//       return;
+//     }
+//
+//     final text = _plainText;
+//     final start = _selection.start;
+//     final end = _selection.end;
+//     final selected = text.substring(start, end);
+//
+//     final isBold = selected.startsWith('**') && selected.endsWith('**');
+//     String replacement;
+//     int newCursor;
+//
+//     if (isBold) {
+//       final unbold = selected.substring(2, selected.length - 2);
+//       replacement = unbold;
+//       newCursor = start + unbold.length;
+//     } else {
+//       replacement = '**$selected**';
+//       newCursor = start + replacement.length;
+//     }
+//
+//     final newText =
+//         text.substring(0, start) + replacement + text.substring(end);
+//
+//     _setPlainText(newText, cursorOffset: newCursor);
+//     _scheduleAutoSave();
+//   }
+//
+//   void _toggleItalic() {
+//     if (!_hasSelection) {
+//       _showSelectTextSnack();
+//       return;
+//     }
+//
+//     final text = _plainText;
+//     final start = _selection.start;
+//     final end = _selection.end;
+//     final selected = text.substring(start, end);
+//
+//     final isItalic =
+//         selected.startsWith('*') &&
+//         selected.endsWith('*') &&
+//         !selected.startsWith('**');
+//
+//     String replacement;
+//     int newCursor;
+//
+//     if (isItalic) {
+//       final unitalic = selected.substring(1, selected.length - 1);
+//       replacement = unitalic;
+//       newCursor = start + unitalic.length;
+//     } else {
+//       replacement = '*$selected*';
+//       newCursor = start + replacement.length;
+//     }
+//
+//     final newText =
+//         text.substring(0, start) + replacement + text.substring(end);
+//
+//     _setPlainText(newText, cursorOffset: newCursor);
+//     _scheduleAutoSave();
+//   }
+//
+//   void _addLink() {
+//     if (!_hasSelection) {
+//       _showSelectTextSnack();
+//       return;
+//     }
+//
+//     final text = _plainText;
+//     final start = _selection.start;
+//     final end = _selection.end;
+//     final selected = text.substring(start, end);
+//
+//     final link = '[$selected](https://)';
+//     final newText = text.substring(0, start) + link + text.substring(end);
+//     final newCursor = start + link.length - 1; // before closing )
+//
+//     _setPlainText(newText, cursorOffset: newCursor);
+//     _scheduleAutoSave();
+//   }
+//
+//   void _insertQuote() {
+//     final text = _plainText;
+//     final cursorPos = _selection.isValid ? _selection.baseOffset : text.length;
+//
+//     final before = text.substring(0, cursorPos);
+//     final lastNewline = before.lastIndexOf('\n');
+//     final currentLineStart = lastNewline == -1 ? 0 : lastNewline + 1;
+//     final currentLine = text.substring(currentLineStart, cursorPos);
+//
+//     String insertion;
+//     if (currentLine.trim().isEmpty) {
+//       insertion = '> ';
+//     } else {
+//       insertion = '\n> ';
+//     }
+//
+//     final newText =
+//         text.substring(0, cursorPos) + insertion + text.substring(cursorPos);
+//
+//     _setPlainText(newText, cursorOffset: cursorPos + insertion.length);
+//     _scheduleAutoSave();
+//   }
+//
+//   void _insertBullet() {
+//     final text = _plainText;
+//     final cursorPos = _selection.isValid ? _selection.baseOffset : text.length;
+//
+//     final before = text.substring(0, cursorPos);
+//     final lastNewline = before.lastIndexOf('\n');
+//     final currentLineStart = lastNewline == -1 ? 0 : lastNewline + 1;
+//     final currentLine = text.substring(currentLineStart, cursorPos);
+//
+//     String insertion;
+//     if (currentLine.trim().isEmpty) {
+//       insertion = '• ';
+//     } else {
+//       insertion = '\n• ';
+//     }
+//
+//     final newText =
+//         text.substring(0, cursorPos) + insertion + text.substring(cursorPos);
+//
+//     _setPlainText(newText, cursorOffset: cursorPos + insertion.length);
+//     _scheduleAutoSave();
+//   }
+//
+//   void _insertNumberedList() {
+//     final text = _plainText;
+//     final cursorPos = _selection.isValid ? _selection.baseOffset : text.length;
+//
+//     final before = text.substring(0, cursorPos);
+//     final lastNewline = before.lastIndexOf('\n');
+//     final currentLineStart = lastNewline == -1 ? 0 : lastNewline + 1;
+//     final currentLine = text.substring(currentLineStart, cursorPos);
+//
+//     int number = 1;
+//     final lines = before.split('\n');
+//     for (var line in lines.reversed) {
+//       final match = RegExp(r'^(\d+)\.\s').firstMatch(line.trim());
+//       if (match != null) {
+//         number = int.parse(match.group(1)!) + 1;
+//         break;
+//       }
+//     }
+//
+//     String insertion;
+//     if (currentLine.trim().isEmpty) {
+//       insertion = '$number. ';
+//     } else {
+//       insertion = '\n$number. ';
+//     }
+//
+//     final newText =
+//         text.substring(0, cursorPos) + insertion + text.substring(cursorPos);
+//
+//     _setPlainText(newText, cursorOffset: cursorPos + insertion.length);
+//     _scheduleAutoSave();
+//   }
+//
+//   void _insertDivider() {
+//     final text = _plainText;
+//     final cursorPos = _selection.isValid ? _selection.baseOffset : text.length;
+//
+//     const insertion = '\n\n• • •\n\n';
+//     final newText =
+//         text.substring(0, cursorPos) + insertion + text.substring(cursorPos);
+//
+//     _setPlainText(newText, cursorOffset: cursorPos + insertion.length);
+//     _scheduleAutoSave();
+//   }
+//
+//   bool _handleEnterKey() {
+//     final text = _plainText;
+//     final cursorPos = _selection.isValid ? _selection.baseOffset : text.length;
+//
+//     final before = text.substring(0, cursorPos);
+//     final lastNewline = before.lastIndexOf('\n');
+//     final currentLineStart = lastNewline == -1 ? 0 : lastNewline + 1;
+//     final currentLine = text.substring(currentLineStart, cursorPos);
+//     final after = text.substring(cursorPos);
+//
+//     // First line → heading capitalization
+//     if (_isFirstLine &&
+//         currentLine.trim().isNotEmpty &&
+//         !currentLine.contains('[IMAGE:')) {
+//       final clean = currentLine.trim();
+//       final heading = _capitalizeWords(clean);
+//       final newText = '$heading\n\n$after';
+//
+//       setState(() => _isFirstLine = false);
+//
+//       _setPlainText(newText, cursorOffset: heading.length + 2);
+//       _scheduleAutoSave();
+//       return true;
+//     }
+//
+//     if (_isFirstLine) {
+//       setState(() => _isFirstLine = false);
+//     }
+//
+//     // quote continuation
+//     if (currentLine.trim().startsWith('>')) {
+//       if (currentLine.trim() == '>') {
+//         final newText = '${text.substring(0, currentLineStart)}\n$after';
+//         _setPlainText(newText, cursorOffset: currentLineStart + 1);
+//       } else {
+//         final newText = '${text.substring(0, cursorPos)}\n> $after';
+//         _setPlainText(newText, cursorOffset: cursorPos + 3);
+//       }
+//       _scheduleAutoSave();
+//       return true;
+//     }
+//
+//     // bullet continuation
+//     if (currentLine.trim().startsWith('•')) {
+//       if (currentLine.trim() == '•') {
+//         final newText = '${text.substring(0, currentLineStart)}\n$after';
+//         _setPlainText(newText, cursorOffset: currentLineStart + 1);
+//       } else {
+//         final newText = '${text.substring(0, cursorPos)}\n• $after';
+//         _setPlainText(newText, cursorOffset: cursorPos + 3);
+//       }
+//       _scheduleAutoSave();
+//       return true;
+//     }
+//
+//     // numbered list continuation
+//     final numberMatch = RegExp(r'^(\d+)\.\s').firstMatch(currentLine.trim());
+//     if (numberMatch != null) {
+//       final currentNumber = int.parse(numberMatch.group(1)!);
+//       final contentAfterNumber = currentLine.substring(
+//         currentLine.indexOf('. ') + 2,
+//       );
+//
+//       if (contentAfterNumber.trim().isEmpty) {
+//         final newText = '${text.substring(0, currentLineStart)}\n$after';
+//         _setPlainText(newText, cursorOffset: currentLineStart + 1);
+//       } else {
+//         final nextNumber = currentNumber + 1;
+//         final newText = '${text.substring(0, cursorPos)}\n$nextNumber. $after';
+//         _setPlainText(
+//           newText,
+//           cursorOffset: cursorPos + nextNumber.toString().length + 3,
+//         );
+//       }
+//       _scheduleAutoSave();
+//       return true;
+//     }
+//
+//     return false;
+//   }
+//
+//   // ====== More options & preview ======
+//
+//   void _showMoreOptions() {
+//     showModalBottomSheet(
+//       context: context,
+//       backgroundColor: Colors.transparent,
+//       builder: (context) {
+//         final isDark = Theme.of(context).brightness == Brightness.dark;
+//         return Container(
+//           decoration: BoxDecoration(
+//             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+//             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+//           ),
+//           padding: const EdgeInsets.symmetric(vertical: 20),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               Container(
+//                 width: 40,
+//                 height: 4,
+//                 margin: const EdgeInsets.only(bottom: 20),
+//                 decoration: BoxDecoration(
+//                   color: Colors.grey[400],
+//                   borderRadius: BorderRadius.circular(2),
+//                 ),
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.save_outlined),
+//                 title: const Text('Save to Drafts'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _saveToDrafts();
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.visibility_outlined),
+//                 title: const Text('Preview Article'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _showPreview();
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.drafts_outlined),
+//                 title: const Text('View Drafts'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   context.push(Routes.draftsListScreen);
+//                 },
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
+//   }
+//
+//   void _showPreview() {
+//     Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => ArticlePreviewScreen(
+//           content: _plainText,
+//           images: List<String>.from(_imageFilenames),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   // ====== Publish ======
+//
+//   Future<void> _onPublish() async {
+//     final createArticleVM = ref.read(articlePublishProvider.notifier);
+//     final title = _extractTitle();
+//     final rawContent = _plainText;
+//
+//     // Resolve filenames into full file paths for repo
+//     final localImagePaths = <String>[];
+//     for (final filename in _imageFilenames) {
+//       final file = await ImagePersistenceHelper.getImageFile(filename);
+//       if (file != null && await file.exists()) {
+//         localImagePaths.add(file.path);
+//       }
+//     }
+//
+//     await createArticleVM.publishArticle(
+//       title: title,
+//       rawContent: rawContent,
+//       localImagePaths: localImagePaths,
+//     );
+//   }
+//
+//   // ====== UI helpers ======
+//
+//   Widget _buildToolButton({
+//     IconData? icon,
+//     String? label,
+//     required VoidCallback onTap,
+//     VoidCallback? onLongPress,
+//     required bool isDark,
+//     String? tooltip,
+//   }) {
+//     return Tooltip(
+//       message: tooltip ?? '',
+//       child: InkWell(
+//         onTap: onTap,
+//         onLongPress: onLongPress,
+//         borderRadius: BorderRadius.circular(8),
+//         child: Container(
+//           padding: const EdgeInsets.all(10),
+//           child: label != null
+//               ? Text(
+//                   label,
+//                   style: TextStyle(
+//                     fontSize: 18,
+//                     fontWeight: FontWeight.w600,
+//                     color: isDark ? Colors.grey[400] : Colors.grey[700],
+//                   ),
+//                 )
+//               : Icon(
+//                   icon,
+//                   size: 22,
+//                   color: isDark ? Colors.grey[400] : Colors.grey[700],
+//                 ),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   // ====== Build ======
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+//     final publishState = ref.watch(articlePublishProvider);
+//     final isPublishing = publishState is Loading<String>;
+//
+//     ref.listen<ApiResponse<String>>(articlePublishProvider, (prev, next) {
+//       if (next is Success<String>) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text('Article published successfully')),
+//         );
+//         if (widget.draftId != null) {
+//           final draftsVM = ref.read(draftsViewModelProvider.notifier);
+//           draftsVM.deleteDraft(widget.draftId!);
+//         }
+//         context.go(Routes.home);
+//       } else if (next is Failure<String>) {
+//         ScaffoldMessenger.of(
+//           context,
+//         ).showSnackBar(SnackBar(content: Text(next.message)));
+//       }
+//     });
+//
+//     return Scaffold(
+//       backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+//       appBar: AppBar(
+//         backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+//         elevation: 0,
+//         leading: TextButton(
+//           onPressed: () => context.pop(),
+//           child: Text(
+//             'Close',
+//             style: TextStyle(
+//               fontSize: 16,
+//               color: isDark ? Colors.white : Colors.black87,
+//             ),
+//           ),
+//         ),
+//         leadingWidth: 80,
+//         actions: [
+//           IconButton(
+//             onPressed: isPublishing ? null : _showMoreOptions,
+//             icon: Icon(
+//               Icons.more_horiz,
+//               color: isDark ? Colors.white : Colors.black87,
+//             ),
+//           ),
+//           TextButton(
+//             onPressed: isPublishing ? null : _onPublish,
+//             child: isPublishing
+//                 ? const SizedBox(
+//                     width: 16,
+//                     height: 16,
+//                     child: CircularProgressIndicator(strokeWidth: 2),
+//                   )
+//                 : const Text(
+//                     'Publish',
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.w600,
+//                       color: Color(0xFF4CAF50),
+//                     ),
+//                   ),
+//           ),
+//           const SizedBox(width: 8),
+//         ],
+//       ),
+//       body: Column(
+//         children: [
+//           if (_saveStatus.isNotEmpty)
+//             Container(
+//               width: double.infinity,
+//               padding: const EdgeInsets.symmetric(vertical: 4),
+//               color: Colors.green.withOpacity(0.08),
+//               child: Text(
+//                 _saveStatus,
+//                 textAlign: TextAlign.center,
+//                 style: const TextStyle(
+//                   color: Colors.green,
+//                   fontSize: 11,
+//                   fontWeight: FontWeight.w500,
+//                 ),
+//               ),
+//             ),
+//           Expanded(
+//             child: SingleChildScrollView(
+//               padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   RawKeyboardListener(
+//                     focusNode: FocusNode(),
+//                     onKey: (event) {
+//                       if (event is RawKeyDownEvent &&
+//                           event.logicalKey == LogicalKeyboardKey.enter) {
+//                         if (_handleEnterKey()) {
+//                           // prevent default? (we can't cancel, but logic still works)
+//                         }
+//                       }
+//                     },
+//                     // child: ExtendedTextField(
+//                     //   controller: _textController,
+//                     //   focusNode: _focusNode,
+//                     //   maxLines: null,
+//                     //   minLines: 10,
+//                     //   expands: false,
+//                     //   specialTextSpanBuilder:
+//                     //       null, // we don’t need special spans for markers
+//                     //   style: TextStyle(
+//                     //     fontSize: 18,
+//                     //     height: 1.6,
+//                     //     color: isDark ? Colors.white : Colors.black87,
+//                     //   ),
+//                     //   decoration: InputDecoration(
+//                     //     hintText: 'Tell your story...',
+//                     //     hintStyle: TextStyle(
+//                     //       fontSize: 18,
+//                     //       color: isDark ? Colors.grey[600] : Colors.grey[400],
+//                     //     ),
+//                     //     border: InputBorder.none,
+//                     //     contentPadding: EdgeInsets.zero,
+//                     //   ),
+//                     //   onChanged: (text) => _onTextChanged(),
+//                     // ),
+//                   ),
+//                   const SizedBox(height: 120),
+//                 ],
+//               ),
+//             ),
+//           ),
+//           Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+//             decoration: BoxDecoration(
+//               color: isDark ? Colors.grey[900] : Colors.white,
+//               borderRadius: BorderRadius.circular(16),
+//               border: Border.all(
+//                 color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+//               ),
+//             ),
+//           ),
+//
+//           Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//             decoration: BoxDecoration(
+//               color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+//               border: Border(
+//                 top: BorderSide(
+//                   color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+//                 ),
+//               ),
+//             ),
+//             child: Row(
+//               children: [
+//                 _buildToolButton(
+//                   label: 'Tt',
+//                   onTap: _toggleBold,
+//                   onLongPress: () {
+//                     _showFormatMenu();
+//                   },
+//                   isDark: isDark,
+//                   tooltip: 'Tap: Bold | Long press: More',
+//                 ),
+//                 _buildToolButton(
+//                   icon: Icons.format_quote,
+//                   onTap: _insertQuote,
+//                   onLongPress: _showFormatMenu,
+//                   isDark: isDark,
+//                   tooltip: 'Quote',
+//                 ),
+//                 _buildToolButton(
+//                   icon: Icons.circle,
+//                   onTap: _insertBullet,
+//                   isDark: isDark,
+//                   tooltip: 'Bullet',
+//                 ),
+//                 _buildToolButton(
+//                   icon: Icons.format_list_numbered,
+//                   onTap: _insertNumberedList,
+//                   isDark: isDark,
+//                   tooltip: 'Numbered',
+//                 ),
+//                 _buildToolButton(
+//                   icon: Icons.more_horiz,
+//                   onTap: _insertDivider,
+//                   isDark: isDark,
+//                   tooltip: '• • •',
+//                 ),
+//                 const Spacer(),
+//                 _buildToolButton(
+//                   icon: Icons.image_outlined,
+//                   onTap: _pickImage,
+//                   isDark: isDark,
+//                   tooltip: 'Image',
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+//
+//   void _showFormatMenu() {
+//     if (!_hasSelection) {
+//       _showSelectTextSnack();
+//       return;
+//     }
+//
+//     showModalBottomSheet(
+//       context: context,
+//       backgroundColor: Colors.transparent,
+//       builder: (context) {
+//         final isDark = Theme.of(context).brightness == Brightness.dark;
+//         return Container(
+//           decoration: BoxDecoration(
+//             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+//             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+//           ),
+//           padding: const EdgeInsets.symmetric(vertical: 20),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               Container(
+//                 width: 40,
+//                 height: 4,
+//                 margin: const EdgeInsets.only(bottom: 20),
+//                 decoration: BoxDecoration(
+//                   color: Colors.grey[400],
+//                   borderRadius: BorderRadius.circular(2),
+//                 ),
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.format_bold),
+//                 title: const Text('Bold'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _toggleBold();
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.format_italic),
+//                 title: const Text('Italic'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _toggleItalic();
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.link),
+//                 title: const Text('Add Hyperlink'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _addLink();
+//                 },
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }

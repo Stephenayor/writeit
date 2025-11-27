@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:writeit/core/utils/constants.dart';
 import 'package:writeit/data/repositories/article_repository.dart';
 
+import '../../core/utils/helper/image_persistence_helper.dart';
 import '../../data/models/article.dart';
 
 class ArticleRepositoryImpl implements ArticleRepository {
@@ -83,7 +84,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
         commentsCount: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        publishedAt: null,
+        publishedAt: Timestamp.now(),
       );
 
       await articleDocRef.set(article.toJson());
@@ -100,36 +101,33 @@ class ArticleRepositoryImpl implements ArticleRepository {
     required List<String> localImagePaths,
   }) async {
     print("Local paths received: $localImagePaths");
-    if (localImagePaths.isEmpty) {
-      return [];
-    }
+
     final urls = <String>[];
 
     for (var i = 0; i < localImagePaths.length; i++) {
-      final path = localImagePaths[i];
-      final file = File(path);
+      final filename = localImagePaths[i];
 
-      if (!file.existsSync()) {
+      // Convert filename to actual file path
+      final file = await ImagePersistenceHelper.getImageFile(filename);
+
+      if (file == null || !await file.exists()) {
+        print("File does not exist: $filename");
         continue;
       }
 
       final fileName =
-          '$articleTitle${DateTime.now()}${_auth.currentUser?.displayName}_$i.jpg';
-      final firebaseStorageRef = _storage.ref(
-        'article_images/$authorId/$articleId/$fileName',
-      );
+          '$articleTitle${DateTime.now()}_${_auth.currentUser?.uid}_$i.jpg';
 
-      final firebaseStoragePath =
-          'article_images/$authorId/$articleId/$fileName';
+      final storageRef = _storage.ref('article_images/$fileName');
 
       try {
-        final uploadTask = _storage.ref(firebaseStoragePath).putFile(file);
-        final snapshot = await uploadTask;
-        final downloadUrl = await snapshot.ref.getDownloadURL();
+        final uploadTask = await storageRef.putFile(file);
+        final downloadUrl = await uploadTask.ref.getDownloadURL();
+
         urls.add(downloadUrl);
-      } catch (e, stack) {
-        print("Exception: $e");
-        rethrow;
+        print("Uploaded $fileName → $downloadUrl");
+      } catch (e) {
+        print("Upload failed for $filename → $e");
       }
     }
 
@@ -155,6 +153,46 @@ class ArticleRepositoryImpl implements ArticleRepository {
     const wordsPerMinute = 200;
     final minutes = (words / wordsPerMinute).ceil();
     return minutes == 0 ? 1 : minutes;
+  }
+
+  @override
+  Future<List<Article>> fetchArticlesByCategory(String category) async {
+    final snapshot = await _firestore
+        .collection(Constants.articles)
+        .where('status', isEqualTo: 'published')
+        .where('category', isEqualTo: category)
+        .get();
+
+    return snapshot.docs
+        .map((d) => Article.fromJson(d.data(), snapshot.docs.single.id))
+        .toList();
+  }
+
+  @override
+  Future<List<Article>> fetchArticlesByTag(String tag) async {
+    final snapshot = await _firestore
+        .collection(Constants.articles)
+        .where('status', isEqualTo: 'published')
+        .where('tags', arrayContains: tag)
+        .get();
+    return snapshot.docs
+        .map((d) => Article.fromJson(d.data(), snapshot.docs.single.id))
+        .toList();
+  }
+
+  @override
+  Stream<List<Article>> fetchLatestArticles() {
+    return _firestore
+        .collection(Constants.articles)
+        .where('status', isEqualTo: 'published')
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => Article.fromJson(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   // @override

@@ -6,4 +6,5 @@ class Routes {
   static const String splashScreen = '/splash-screen';
   static const String createArticleScreen = '/create-article-screen';
   static const String draftsListScreen = '/drafts-list-screen';
+  static const String articlesDetailScreen = '/article-detail-screen';
 }

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:writeit/core/di/locator.dart';
 import 'package:writeit/core/network/api_response.dart';
 import 'package:writeit/data/repositories/auth_repository.dart';
+import 'package:writeit/presentation/home/home_viewmodel.dart';
 import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
+import '../data/models/article.dart';
 import '../data/models/draft.dart';
 import '../data/repositories/article_repository.dart';
 import '../data/repositories/draft_repository.dart';
@@ -42,3 +44,14 @@ final articlePublishProvider =
       final repo = getIt<ArticleRepository>();
       return CreateArticleViewModel(repo);
     });
+
+// final homeViewModelProvider1 =
+//     StateNotifierProvider<HomeViewmodel, AsyncValue<List<Article>>>((ref) {
+//       final repo = getIt<ArticleRepository>();
+//       return HomeViewmodel(repo);
+//     });
+
+final homeViewModelProvider = StreamProvider.autoDispose((ref) {
+  final repo = getIt<ArticleRepository>();
+  return repo.fetchLatestArticles();
+});

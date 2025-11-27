@@ -11,7 +11,7 @@ class Article {
   final String? authorPhotoUrl;
   final List<String> tags;
   final String? category;
-  final String status; // "draft" | "published"
+  final String status;
   final int readTimeMinutes;
   final int likesCount;
   final int commentsCount;
@@ -38,6 +38,28 @@ class Article {
     this.updatedAt,
     this.publishedAt,
   });
+
+  factory Article.fromJson(Map<String, dynamic> json, String documentId) {
+    return Article(
+      id: documentId,
+      title: json['title'] ?? '',
+      subtitle: json['subtitle'],
+      content: json['content'] ?? '',
+      coverImageUrl: json['coverImageUrl'],
+      authorId: json['authorId'] ?? '',
+      authorName: json['authorName'] ?? '',
+      authorPhotoUrl: json['authorPhotoUrl'],
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
+      category: json['category'],
+      status: json['status'] ?? 'draft',
+      readTimeMinutes: json['readTimeMinutes'] ?? 0,
+      likesCount: json['likesCount'] ?? 0,
+      commentsCount: json['commentsCount'] ?? 0,
+      createdAt: json['createdAt'] as Timestamp?,
+      updatedAt: json['updatedAt'] as Timestamp?,
+      publishedAt: json['publishedAt'] as Timestamp?,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {

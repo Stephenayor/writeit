@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:writeit/data/models/article.dart';
+import 'package:writeit/providers/providers.dart';
 
 import '../../core/utils/routes.dart';
 
@@ -19,6 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = FirebaseAuth.instance.currentUser;
+    final feedState = ref.watch(homeViewModelProvider);
 
     return Scaffold(
       backgroundColor: isDark
@@ -135,15 +138,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
             // Articles List
+            // Expanded(
+            //   child: ListView.builder(
+            //     padding: const EdgeInsets.symmetric(
+            //       horizontal: 20,
+            //       vertical: 8,
+            //     ),
+            //     itemCount: 5,
+            //     itemBuilder: (context, index) {
+            //       return _buildArticleCard(isDark, article[index]);
+            //     },
+            //   ),
+            // ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return _buildArticleCard(isDark);
+              child: feedState.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text("Error loading stories")),
+                data: (articles) {
+                  if (articles.isEmpty) {
+                    return const Center(
+                      child: Text("No published stories yet"),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    itemCount: articles.length,
+                    itemBuilder: (_, i) {
+                      return _buildArticleCard(isDark, articles[i]);
+                    },
+                  );
                 },
               ),
             ),
@@ -293,174 +320,184 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildArticleCard(bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Author Info
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: const DecorationImage(
-                      image: NetworkImage('https://i.pravatar.cc/150?img=33'),
-                      fit: BoxFit.cover,
+  Widget _buildArticleCard(bool isDark, Article article) {
+    final fallbackImage = "https://picsum.photos/300";
+    return InkWell(
+      onTap: () => context.push(Routes.articlesDetailScreen, extra: article),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Author Info
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Container(
+                  //   width: 36,
+                  //   height: 36,
+                  //   decoration: BoxDecoration(
+                  //     shape: BoxShape.circle,
+                  //     image: const DecorationImage(
+                  //       image: NetworkImage(
+                  //         'https://picsum.photos/200/200',
+                  //       ),
+                  //       fit: BoxFit.cover,
+                  //     ),
+                  //   ),
+                  // ),
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(
+                      article.authorPhotoUrl ?? fallbackImage,
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Dr. Derek Austin',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              article.authorName,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
                             ),
+                            const SizedBox(width: 4),
+                            const Text('🧑‍💼', style: TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'in Career Programming',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
                           ),
-                          const SizedBox(width: 4),
-                          const Text('🧑‍💼', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'in Career Programming',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.more_horiz,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ],
-            ),
-          ),
-
-          // Article Content
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Steve Jobs Hated User Research. Here\'s Why I Agree With Him.',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'People have no idea what they want, and product managers...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: const DecorationImage(
-                      image: NetworkImage('https://picsum.photos/200/200'),
-                      fit: BoxFit.cover,
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  Icon(
+                    Icons.more_horiz,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Footer
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: [
-                Text(
-                  'Jul 31',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+            // Article Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          article.title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.thumb_up_outlined,
-                  size: 16,
-                  color: isDark ? Colors.grey[500] : Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '1.2K',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+                  const SizedBox(width: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      article.coverImageUrl ?? fallbackImage,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 80,
+                        height: 80,
+                        color: Colors.grey,
+                        child: const Icon(Icons.broken_image),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.chat_bubble_outline,
-                  size: 16,
-                  color: isDark ? Colors.grey[500] : Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '71',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[500] : Colors.grey[600],
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.bookmark_border,
-                  size: 20,
-                  color: isDark ? Colors.grey[500] : Colors.grey[600],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // Footer
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(
+                children: [
+                  Text(
+                    (article.publishedAt?.toDate() ?? DateTime.now())
+                        .toLocal()
+                        .toString()
+                        .substring(0, 10),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.thumb_up_outlined,
+                    size: 16,
+                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '1.2K',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 16,
+                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${article.readTimeMinutes} min read',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.bookmark_border,
+                    size: 20,
+                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
