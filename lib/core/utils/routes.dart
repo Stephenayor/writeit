@@ -7,4 +7,5 @@ class Routes {
   static const String createArticleScreen = '/create-article-screen';
   static const String draftsListScreen = '/drafts-list-screen';
   static const String articlesDetailScreen = '/article-detail-screen';
+  static const String profileScreen = '/profile-screen';
 }

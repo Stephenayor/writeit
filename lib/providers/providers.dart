@@ -5,6 +5,8 @@ import 'package:writeit/core/network/api_response.dart';
 import 'package:writeit/data/repositories/auth_repository.dart';
 import 'package:writeit/presentation/home/home_viewmodel.dart';
 import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
+import '../core/utils/user_session_helper.dart';
+import '../data/models/app_user.dart';
 import '../data/models/article.dart';
 import '../data/models/draft.dart';
 import '../data/repositories/article_repository.dart';
@@ -55,3 +57,6 @@ final homeViewModelProvider = StreamProvider.autoDispose((ref) {
   final repo = getIt<ArticleRepository>();
   return repo.fetchLatestArticles();
 });
+final userSessionProvider = StateNotifierProvider<UserSessionHelper, AppUser?>(
+  (ref) => getIt<UserSessionHelper>(),
+);

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:writeit/presentation/auth/signin/signin_screen.dart';
 import 'package:writeit/presentation/auth/signup/signup_screen.dart';
 import 'package:writeit/presentation/home/home_screen.dart';
+import 'package:writeit/presentation/profile/profile_screen.dart';
 import 'package:writeit/presentation/publish/create_article_screen.dart';
 import 'package:writeit/presentation/publish/drafts/drafts_list_screen.dart';
 import '../core/utils/routes.dart';
@@ -48,6 +49,10 @@ final router = GoRouter(
         final article = state.extra as Article;
         return ArticleDetailScreen(article: article);
       },
+    ),
+    GoRoute(
+      path: Routes.profileScreen,
+      builder: (context, state) => ProfileScreen(),
     ),
   ],
 );

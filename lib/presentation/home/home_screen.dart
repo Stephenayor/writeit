@@ -268,7 +268,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     icon: Icons.person_rounded,
                     label: 'Profile',
                     isSelected: _currentIndex == 3,
-                    onTap: () => setState(() => _currentIndex = 3),
+                    onTap: () => setState(() {
+                      _currentIndex == 3;
+                      context.push(Routes.profileScreen);
+                    }),
                     isDark: isDark,
                   ),
                 ],
