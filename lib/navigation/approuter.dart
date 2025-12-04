@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:writeit/presentation/auth/signin/signin_screen.dart';
 import 'package:writeit/presentation/auth/signup/signup_screen.dart';
 import 'package:writeit/presentation/home/home_screen.dart';
+import 'package:writeit/presentation/profile/edit_profile_screen.dart';
 import 'package:writeit/presentation/profile/profile_screen.dart';
 import 'package:writeit/presentation/publish/create_article_screen.dart';
 import 'package:writeit/presentation/publish/drafts/drafts_list_screen.dart';
@@ -53,6 +54,11 @@ final router = GoRouter(
     GoRoute(
       path: Routes.profileScreen,
       builder: (context, state) => ProfileScreen(),
+    ),
+    GoRoute(
+      path: Routes.editProfileScreen,
+      builder: (context, state) =>
+          EditProfileScreen(name: '', email: '', bio: ''),
     ),
   ],
 );

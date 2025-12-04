@@ -57,6 +57,7 @@ final homeViewModelProvider = StreamProvider.autoDispose((ref) {
   final repo = getIt<ArticleRepository>();
   return repo.fetchLatestArticles();
 });
+
 final userSessionProvider = StateNotifierProvider<UserSessionHelper, AppUser?>(
   (ref) => getIt<UserSessionHelper>(),
 );
