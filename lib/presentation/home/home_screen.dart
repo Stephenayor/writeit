@@ -136,20 +136,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-
-            // Articles List
-            // Expanded(
-            //   child: ListView.builder(
-            //     padding: const EdgeInsets.symmetric(
-            //       horizontal: 20,
-            //       vertical: 8,
-            //     ),
-            //     itemCount: 5,
-            //     itemBuilder: (context, index) {
-            //       return _buildArticleCard(isDark, article[index]);
-            //     },
-            //   ),
-            // ),
+            const SizedBox(height: 16),
+            // Stories
             Expanded(
               child: feedState.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -161,6 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   }
 
+                  //Articles List
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
