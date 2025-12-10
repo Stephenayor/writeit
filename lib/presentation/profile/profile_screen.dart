@@ -29,13 +29,9 @@ class ProfileScreen extends ConsumerWidget {
 
     final user = profileState.value!;
 
-    String userName = user?.displayName ?? "update profile...";
-    String userEmail = user?.email ?? 'noemail@gmail.com';
-    String userBio = user?.bio ?? "update profile...";
-
-    if (user == null) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    String userName = user.displayName ?? "update profile...";
+    String userEmail = user.email ?? 'noemail@gmail.com';
+    String userBio = user.bio ?? "...";
 
     return Scaffold(
       backgroundColor: isDark
