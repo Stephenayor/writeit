@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AppUser {
@@ -42,4 +43,22 @@ class AppUser {
       bio: bio ?? this.bio,
     );
   }
+
+  factory AppUser.fromJson(Map<String, dynamic> json, String uid) {
+    return AppUser(
+      uid: uid,
+      displayName: json['name'] ?? '',
+      email: json['email'] ?? '',
+      bio: json['bio'],
+      photoURL: json['photoUrl'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "name": displayName,
+    "email": email,
+    "bio": bio,
+    "photoUrl": photoURL,
+    "updatedAt": FieldValue.serverTimestamp(),
+  };
 }

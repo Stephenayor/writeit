@@ -10,22 +10,28 @@ import 'edit_profile_screen.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  // bool notificationsEnabled = true;
-  // final String userName = 'Laiba Ahmar';
-  // final String userEmail = 'youremail@domain.com | +01 234 567 89';
-  // final String userBio = 'Flutter developer passionate about creating beautiful apps';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = ref.watch(userSessionProvider);
+    // final user = ref.watch(userSessionProvider);
+
     bool notificationsEnabled = true;
     final notificationsProvider = StateProvider<bool>((ref) => true);
+    final profileState = ref.watch(profileViewModelProvider);
+
+    if (profileState.isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (profileState.hasError) {
+      return Center(child: Text("Failed to load profile"));
+    }
+
+    final user = profileState.value!;
 
     String userName = user?.displayName ?? "update profile...";
     String userEmail = user?.email ?? 'noemail@gmail.com';
-    String userBio =
-        'Flutter developer passionate about creating beautiful apps';
+    String userBio = user?.bio ?? "update profile...";
 
     if (user == null) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -85,16 +91,12 @@ class ProfileScreen extends ConsumerWidget {
                   Stack(
                     children: [
                       user.photoURL != null && user.photoURL!.isNotEmpty
-                          ? Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image: NetworkImage(user.photoURL!),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                          ? CircleAvatar(
+                              radius: 50,
+                              backgroundImage: user.photoURL != null
+                                  ? NetworkImage(user.photoURL!)
+                                  : AssetImage("assets/default_avatar.png")
+                                        as ImageProvider,
                             )
                           : Container(
                               width: 100,
@@ -121,49 +123,50 @@ class ProfileScreen extends ConsumerWidget {
                                     color: Colors.white,
                                   ),
                                 ),
-                                // child: Container(
-                                //   width: 80,
-                                //   height: 80,
-                                //   decoration: const BoxDecoration(
-                                //     shape: BoxShape.circle,
-                                //     gradient: LinearGradient(
-                                //       colors: [Color(0xFF81D4FA), Color(0xFF4FC3F7)],
-                                //       begin: Alignment.topCenter,
-                                //       end: Alignment.bottomCenter,
-                                //     ),
-                                //   ),
-                                // ),
                               ),
                             ),
                       Positioned(
                         bottom: 0,
                         right: 0,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF2C2C2C)
-                                : Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
+                        child: GestureDetector(
+                          onTap: () async {
+                            final result = await context.pushNamed(
+                              'edit-profile',
+                              extra: {
+                                'name': userName,
+                                'email': userEmail,
+                                'bio': userBio,
+                                'photoUrl': user.photoURL,
+                              },
+                            );
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
                               color: isDark
-                                  ? const Color(0xFF1E1E1E)
+                                  ? const Color(0xFF2C2C2C)
                                   : Colors.white,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                                width: 2,
                               ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: isDark ? Colors.white : Colors.black,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.edit,
+                              size: 16,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
                       ),
@@ -225,6 +228,7 @@ class ProfileScreen extends ConsumerWidget {
                                 name: userName,
                                 email: userEmail,
                                 bio: userBio,
+                                photoUrl: user.photoURL,
                               ),
                             ),
                           );

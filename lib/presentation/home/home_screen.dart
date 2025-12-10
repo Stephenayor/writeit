@@ -22,6 +22,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = FirebaseAuth.instance.currentUser;
     final feedState = ref.watch(homeViewModelProvider);
+    final profileState = ref.watch(userSessionProvider);
 
     return Scaffold(
       backgroundColor: isDark
@@ -41,8 +42,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      image: const DecorationImage(
-                        image: NetworkImage('https://i.pravatar.cc/150?img=12'),
+                      image: DecorationImage(
+                        image: NetworkImage(
+                          currentUser!.photoURL ??
+                              'https://i.pravatar.cc/150?img=12',
+                        ),
                         fit: BoxFit.cover,
                       ),
                       border: Border.all(
@@ -66,7 +70,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          currentUser?.displayName ?? 'Guest',
+                          currentUser.displayName ?? 'Guest',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

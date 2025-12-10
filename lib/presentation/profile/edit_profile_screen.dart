@@ -1,26 +1,33 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../providers/providers.dart';
 
-class EditProfileScreen extends StatefulWidget {
+class EditProfileScreen extends ConsumerStatefulWidget {
   final String name;
   final String email;
   final String bio;
+  final String? photoUrl;
 
   const EditProfileScreen({
-    Key? key,
+    super.key,
     required this.name,
     required this.email,
     required this.bio,
-  }) : super(key: key);
+    this.photoUrl,
+  });
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController bioController;
+  File? selectedImage;
 
   @override
   void initState() {
@@ -53,21 +60,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         centerTitle: true,
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, {
-                'name': nameController.text,
-                'email': emailController.text,
-                'bio': bioController.text,
-              });
+          Consumer(
+            builder: (context, ref, _) {
+              final profileState = ref.watch(profileViewModelProvider);
+
+              return TextButton(
+                onPressed: profileState.isLoading
+                    ? null
+                    : () async {
+                        await ref
+                            .read(profileViewModelProvider.notifier)
+                            .updateProfile(
+                              name: nameController.text,
+                              bio: bioController.text,
+                              image: selectedImage,
+                            );
+
+                        final newState = ref.read(profileViewModelProvider);
+                        if (!newState.isLoading && newState.hasValue) {
+                          if (context.mounted) Navigator.pop(context);
+                        }
+                      },
+                child: profileState.isLoading
+                    ? const CupertinoActivityIndicator()
+                    : const Text(
+                        "Save",
+                        style: TextStyle(
+                          color: Colors.purple,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              );
             },
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: Color(0xFFFFA726),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
         ],
       ),
@@ -76,53 +100,99 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Center(
+            //   child: Stack(
+            //     children: [
+            //       Container(
+            //         width: 80,
+            //         height: 80,
+            //         decoration: BoxDecoration(
+            //           shape: BoxShape.circle,
+            //           gradient: const LinearGradient(
+            //             colors: [Color(0xFF81D4FA), Color(0xFF4FC3F7)],
+            //           ),
+            //         ),
+            //       ),
+            //       Positioned(
+            //         bottom: 0,
+            //         right: 0,
+            //         child: Container(
+            //           width: 28,
+            //           height: 28,
+            //           decoration: BoxDecoration(
+            //             color: const Color(0xFFFFA726),
+            //             shape: BoxShape.circle,
+            //             border: Border.all(
+            //               color: isDark
+            //                   ? const Color(0xFF121212)
+            //                   : Colors.white,
+            //               width: 2,
+            //             ),
+            //           ),
+            //           child: const Icon(
+            //             Icons.camera_alt,
+            //             size: 14,
+            //             color: Colors.white,
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
             Center(
-              child: Stack(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF81D4FA), Color(0xFF4FC3F7)],
-                      ),
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: selectedImage != null
+                          ? FileImage(selectedImage!)
+                          : (widget.photoUrl != null &&
+                                widget.photoUrl!.isNotEmpty)
+                          ? NetworkImage(widget.photoUrl!)
+                          : const AssetImage("assets/default_avatar.png")
+                                as ImageProvider,
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFA726),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF121212)
-                              : Colors.white,
-                          width: 2,
+
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF121212)
+                                : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 14,
+                          color: Colors.white,
                         ),
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 14,
-                        color: Colors.white,
-                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+
             const SizedBox(height: 8),
             Center(
               child: TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  _pickImage;
+                },
                 child: const Text(
                   'Update photo',
                   style: TextStyle(
-                    color: Color(0xFFFFA726),
+                    color: Colors.deepPurple,
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -209,5 +279,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if (picked != null) {
+      setState(() => selectedImage = File(picked.path));
+    }
   }
 }
