@@ -100,45 +100,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Center(
-            //   child: Stack(
-            //     children: [
-            //       Container(
-            //         width: 80,
-            //         height: 80,
-            //         decoration: BoxDecoration(
-            //           shape: BoxShape.circle,
-            //           gradient: const LinearGradient(
-            //             colors: [Color(0xFF81D4FA), Color(0xFF4FC3F7)],
-            //           ),
-            //         ),
-            //       ),
-            //       Positioned(
-            //         bottom: 0,
-            //         right: 0,
-            //         child: Container(
-            //           width: 28,
-            //           height: 28,
-            //           decoration: BoxDecoration(
-            //             color: const Color(0xFFFFA726),
-            //             shape: BoxShape.circle,
-            //             border: Border.all(
-            //               color: isDark
-            //                   ? const Color(0xFF121212)
-            //                   : Colors.white,
-            //               width: 2,
-            //             ),
-            //           ),
-            //           child: const Icon(
-            //             Icons.camera_alt,
-            //             size: 14,
-            //             color: Colors.white,
-            //           ),
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
             Center(
               child: GestureDetector(
                 onTap: _pickImage,
@@ -236,12 +197,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: emailController,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+              readOnly: true,
+              enableInteractiveSelection: false,
+              style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: isDark
                     ? const Color(0xFF2C2C2C)
-                    : const Color(0xFFF5F5F5),
+                    : const Color(0xFFEDEDED),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,

@@ -11,57 +11,7 @@ import '../core/utils/routes.dart';
 import '../data/models/article.dart';
 import '../presentation/publish/detail/article_detail_screen.dart';
 import '../splash_screen.dart';
-
-// final router = GoRouter(
-//   initialLocation: Routes.splashScreen,
-//   routes: [
-//     GoRoute(
-//       path: Routes.splashScreen,
-//       pageBuilder: (context, state) =>
-//           const CupertinoPage(child: SplashScreen()),
-//     ),
-//     GoRoute(
-//       path: Routes.signUp,
-//       builder: (context, state) => const SignupScreen(),
-//     ),
-//     GoRoute(path: Routes.home, builder: (context, state) => const HomeScreen()),
-//     GoRoute(
-//       path: Routes.signIn,
-//       builder: (context, state) => const SigninScreen(),
-//     ),
-//     GoRoute(
-//       path: Routes.createArticleScreen,
-//       builder: (context, state) {
-//         final data = state.extra as Map?;
-//         return CreateArticleScreen(
-//           draftId: data?['draftId'],
-//           existingContent: data?['content'],
-//           existingImages: data?['images'],
-//         );
-//       },
-//     ),
-//     GoRoute(
-//       path: Routes.draftsListScreen,
-//       builder: (context, state) => DraftsListScreen(),
-//     ),
-//     GoRoute(
-//       path: Routes.articlesDetailScreen,
-//       builder: (context, state) {
-//         final article = state.extra as Article;
-//         return ArticleDetailScreen(article: article);
-//       },
-//     ),
-//     GoRoute(
-//       path: Routes.profileScreen,
-//       builder: (context, state) => ProfileScreen(),
-//     ),
-//     GoRoute(
-//       path: Routes.editProfileScreen,
-//       builder: (context, state) =>
-//           EditProfileScreen(name: '', email: '', bio: ''),
-//     ),
-//   ],
-// );
+import 'main_navigation_wrapper.dart';
 
 final router = GoRouter(
   initialLocation: Routes.splashScreen,
@@ -85,12 +35,11 @@ final router = GoRouter(
       builder: (context, state) => const SigninScreen(),
     ),
 
-    GoRoute(
-      path: Routes.home,
-      name: 'home',
-      builder: (context, state) => const HomeScreen(),
-    ),
-
+    // GoRoute(
+    //   path: Routes.home,
+    //   name: 'home',
+    //   builder: (context, state) => const HomeScreen(),
+    // ),
     GoRoute(
       path: Routes.draftsListScreen,
       name: 'drafts-list',
@@ -121,12 +70,6 @@ final router = GoRouter(
     ),
 
     GoRoute(
-      path: Routes.profileScreen,
-      name: 'profile',
-      builder: (context, state) => ProfileScreen(),
-    ),
-
-    GoRoute(
       path: Routes.editProfileScreen,
       name: 'edit-profile',
       builder: (context, state) {
@@ -139,6 +82,37 @@ final router = GoRouter(
           photoUrl: data['photoUrl'],
         );
       },
+    ),
+
+    // Shell route for screens with bottom navigation
+    ShellRoute(
+      builder: (context, state, child) {
+        return MainNavigationWrapper(child: child);
+      },
+      routes: [
+        GoRoute(
+          path: Routes.home,
+          name: 'home',
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const HomeScreen()),
+        ),
+
+        GoRoute(
+          path: Routes.profileScreen,
+          name: 'profile',
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const ProfileScreen()),
+        ),
+
+        // Add search and saved screens here when ready
+        // GoRoute(
+        //   path: Routes.searchScreen,
+        //   name: 'search',
+        //   pageBuilder: (context, state) => NoTransitionPage(
+        //     child: const SearchScreen(),
+        //   ),
+        // ),
+      ],
     ),
   ],
 );
