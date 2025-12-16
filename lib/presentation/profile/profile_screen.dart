@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
+import 'package:writeit/core/notifications/notifications_notifier.dart';
 import 'package:writeit/core/utils/routes.dart';
 import 'package:writeit/providers/providers.dart';
 import 'edit_profile_screen.dart';
@@ -15,8 +16,7 @@ class ProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // final user = ref.watch(userSessionProvider);
 
-    bool notificationsEnabled = true;
-    final notificationsProvider = StateProvider<bool>((ref) => true);
+    bool notificationsEnabled = ref.watch(notificationsProvider);
     final profileState = ref.watch(profileViewModelProvider);
 
     if (profileState.isLoading) {
@@ -240,18 +240,25 @@ class ProfileScreen extends ConsumerWidget {
                         },
                       ),
                       _MenuItem(
-                        icon: Icons.notifications_outlined,
+                        icon: notificationsEnabled
+                            ? Icons.notifications_active
+                            : Icons.notifications_off_outlined,
                         title: 'Notifications',
                         isDark: isDark,
                         trailing: Switch(
                           value: notificationsEnabled,
                           onChanged: (value) {
-                            ref.read(notificationsProvider.notifier).state =
-                                value;
+                            ref
+                                .read(notificationsProvider.notifier)
+                                .toggle(value);
                           },
-                          activeColor: Colors.blue,
+                          activeColor: Colors.deepPurpleAccent,
                         ),
-                        onTap: () {},
+                        onTap: () {
+                          ref
+                              .read(notificationsProvider.notifier)
+                              .toggle(!notificationsEnabled);
+                        },
                       ),
                       _MenuItem(
                         icon: Icons.logout,

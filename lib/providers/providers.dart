@@ -7,6 +7,7 @@ import 'package:writeit/data/repositories/auth_repository.dart';
 import 'package:writeit/domain/repo/ProfileRepositoryImpl.dart';
 import 'package:writeit/presentation/home/home_viewmodel.dart';
 import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
+import '../core/notifications/notifications_notifier.dart';
 import '../core/utils/user_session_helper.dart';
 import '../data/models/app_user.dart';
 import '../data/models/article.dart';
@@ -74,4 +75,9 @@ final profileViewModelProvider =
     StateNotifierProvider<ProfileViewModel, AsyncValue<AppUser>>((ref) {
       final repo = getIt<ProfileRepository>();
       return ProfileViewModel(repo);
+    });
+
+final notificationsProvider =
+    StateNotifierProvider<NotificationsNotifier, bool>((ref) {
+      return NotificationsNotifier();
     });
