@@ -185,8 +185,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected
-                    ? const Color(0xFF4A90E2)
-                    : (isDark ? Colors.grey[200] : Colors.white),
+                    ? (isDark ? Colors.grey[200] : Colors.white)
+                    : (isDark ? Colors.grey[200] : Colors.black54),
               ),
             ),
           ],

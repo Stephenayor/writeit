@@ -62,8 +62,6 @@ class DraftsViewModel extends StateNotifier<DraftSaveState> {
     }
   }
 
-  // Future<void> deleteDraft(String id) async { await _draftRepository.deleteDraft(id); loadDrafts(); }
-
   Draft? getDraftById(String id) {
     return _draftRepository.getDraftById(id);
   }

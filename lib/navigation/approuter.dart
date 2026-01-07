@@ -34,12 +34,6 @@ final router = GoRouter(
       name: 'sign-in',
       builder: (context, state) => const SigninScreen(),
     ),
-
-    // GoRoute(
-    //   path: Routes.home,
-    //   name: 'home',
-    //   builder: (context, state) => const HomeScreen(),
-    // ),
     GoRoute(
       path: Routes.draftsListScreen,
       name: 'drafts-list',
@@ -53,9 +47,9 @@ final router = GoRouter(
         final data = state.extra as Map<String, dynamic>?;
 
         return CreateArticleScreen(
-          draftId: data?['draftId'],
-          existingContent: data?['content'],
-          existingImages: data?['images'],
+          // draftId: data?['draftId'],
+          // existingContent: data?['content'],
+          // existingImages: data?['images'],
         );
       },
     ),
