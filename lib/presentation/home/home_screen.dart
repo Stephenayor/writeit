@@ -170,151 +170,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [const Color(0xFF4A90E2), const Color(0xFF357ABD)]
-                : [const Color(0xFF5B9FED), const Color(0xFF4A90E2)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF4A90E2).withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              // Navigate to add article
-              context.push(Routes.createArticleScreen);
-            },
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
-          ),
-        ),
-      ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      // bottomNavigationBar: Container(
+      // floatingActionButton: Container(
+      //   width: 56,
+      //   height: 56,
       //   decoration: BoxDecoration(
-      //     color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      //     gradient: LinearGradient(
+      //       colors: isDark
+      //           ? [const Color(0xFF4A90E2), const Color(0xFF357ABD)]
+      //           : [const Color(0xFF5B9FED), const Color(0xFF4A90E2)],
+      //       begin: Alignment.topLeft,
+      //       end: Alignment.bottomRight,
+      //     ),
+      //     borderRadius: BorderRadius.circular(16),
       //     boxShadow: [
       //       BoxShadow(
-      //         color: Colors.black.withOpacity(0.1),
-      //         blurRadius: 20,
-      //         offset: const Offset(0, -5),
+      //         color: const Color(0xFF4A90E2).withOpacity(0.4),
+      //         blurRadius: 12,
+      //         offset: const Offset(0, 4),
       //       ),
       //     ],
-      //     borderRadius: const BorderRadius.only(
-      //       topLeft: Radius.circular(24),
-      //       topRight: Radius.circular(24),
-      //     ),
       //   ),
-      //   child: ClipRRect(
-      //     borderRadius: const BorderRadius.only(
-      //       topLeft: Radius.circular(24),
-      //       topRight: Radius.circular(24),
-      //     ),
-      //     child: BottomAppBar(
-      //       color: Color(0xFF357ABD),
-      //       elevation: 0,
-      //       shape: const CircularNotchedRectangle(),
-      //       notchMargin: 8,
-      //       child: Container(
-      //         height: 60,
-      //         padding: const EdgeInsets.symmetric(horizontal: 20),
-      //         child: Row(
-      //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //           children: [
-      //             _buildNavItem(
-      //               icon: Icons.home_rounded,
-      //               label: 'Home',
-      //               isSelected: _currentIndex == 0,
-      //               onTap: () => setState(() => _currentIndex = 0),
-      //               isDark: isDark,
-      //             ),
-      //             _buildNavItem(
-      //               icon: Icons.search_rounded,
-      //               label: 'Search',
-      //               isSelected: _currentIndex == 1,
-      //               onTap: () => setState(() => _currentIndex = 1),
-      //               isDark: isDark,
-      //             ),
-      //             const SizedBox(width: 56), // Space for FAB
-      //             _buildNavItem(
-      //               icon: Icons.bookmark_rounded,
-      //               label: 'Saved',
-      //               isSelected: _currentIndex == 2,
-      //               onTap: () => setState(() => _currentIndex = 2),
-      //               isDark: isDark,
-      //             ),
-      //             _buildNavItem(
-      //               icon: Icons.person_rounded,
-      //               label: 'Profile',
-      //               isSelected: _currentIndex == 3,
-      //               onTap: () {
-      //                 setState(() => _currentIndex = 3);
-      //                 context.pushNamed(Routes.profileScreen);
-      //               },
-      //               isDark: isDark,
-      //             ),
-      //           ],
-      //         ),
-      //       ),
+      //   child: Material(
+      //     color: Colors.transparent,
+      //     borderRadius: BorderRadius.circular(16),
+      //     child: InkWell(
+      //       borderRadius: BorderRadius.circular(16),
+      //       onTap: () {
+      //         context.push(Routes.createArticleScreen);
+      //       },
+      //       child: const Icon(Icons.add, color: Colors.white, size: 28),
       //     ),
       //   ),
       // ),
     );
   }
-
-  // Widget _buildNavItem({
-  //   required IconData icon,
-  //   required String label,
-  //   required bool isSelected,
-  //   required VoidCallback onTap,
-  //   required bool isDark,
-  // }) {
-  //   return InkWell(
-  //     onTap: onTap,
-  //     borderRadius: BorderRadius.circular(12),
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(vertical: 4),
-  //       child: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         children: [
-  //           Icon(
-  //             icon,
-  //             color: isSelected
-  //                 ? Colors.white70
-  //                 : (isDark ? Colors.grey[200] : Colors.white),
-  //             size: 24,
-  //           ),
-  //           const SizedBox(height: 2),
-  //           Text(
-  //             label,
-  //             style: TextStyle(
-  //               fontSize: 10,
-  //               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-  //               color: isSelected
-  //                   ? const Color(0xFF4A90E2)
-  //                   : (isDark ? Colors.grey[200] : Colors.white),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildArticleCard(bool isDark, Article article) {
     final fallbackImage = "https://picsum.photos/300";
