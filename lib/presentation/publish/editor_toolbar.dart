@@ -7,6 +7,8 @@ class EditorToolbar extends StatelessWidget {
   final VoidCallback onQuote;
   final VoidCallback onBold;
   final VoidCallback onItalic;
+  final VoidCallback onBullet;
+  final VoidCallback onNumbered;
 
   const EditorToolbar({
     required this.onImage,
@@ -14,6 +16,8 @@ class EditorToolbar extends StatelessWidget {
     required this.onQuote,
     required this.onBold,
     required this.onItalic,
+    required this.onBullet,
+    required this.onNumbered,
   });
 
   @override
@@ -38,6 +42,14 @@ class EditorToolbar extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.format_quote),
               onPressed: onQuote,
+            ),
+            IconButton(
+              icon: const Icon(Icons.format_list_bulleted),
+              onPressed: onBullet,
+            ),
+            IconButton(
+              icon: const Icon(Icons.format_list_numbered),
+              onPressed: onNumbered,
             ),
             const Spacer(),
             IconButton(icon: const Icon(Icons.image), onPressed: onImage),

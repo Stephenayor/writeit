@@ -77,6 +77,18 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       } else {
         _blocks.add(EditorBlock.paragraph()..controller.text = line);
       }
+
+      if (line.startsWith('- ')) {
+        final block = EditorBlock.paragraph();
+        block.isBullet = true;
+        block.controller.text = line.substring(2);
+        _blocks.add(block);
+      } else if (RegExp(r'^\d+\. ').hasMatch(line)) {
+        final block = EditorBlock.paragraph();
+        block.isNumbered = true;
+        block.controller.text = line.replaceFirst(RegExp(r'^\d+\. '), '');
+        _blocks.add(block);
+      }
     }
 
     if (_blocks.isEmpty) {
@@ -321,6 +333,40 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     context.push(Routes.draftsListScreen);
   }
 
+  // Map<String, dynamic> _serializeForStorage() {
+  //   final buffer = StringBuffer();
+  //   final images = <String>[];
+  //
+  //   for (final b in _blocks) {
+  //     switch (b.type) {
+  //       case BlockType.heading:
+  //         buffer.writeln('# ${b.controller.text}\n');
+  //         break;
+  //
+  //       case BlockType.quote:
+  //         buffer.writeln('> ${b.controller.text}\n');
+  //         break;
+  //
+  //       case BlockType.image:
+  //         final index = images.length;
+  //         images.add(b.image!.path);
+  //         buffer.writeln('[IMAGE:$index]\n');
+  //         break;
+  //
+  //       default:
+  //         if (b.isBullet) {
+  //           buffer.writeln('- ${b.controller.text}\n');
+  //         } else if (b.isNumbered) {
+  //           buffer.writeln('1. ${b.controller.text}\n');
+  //         } else {
+  //           buffer.writeln('${b.controller.text}\n');
+  //         }
+  //     }
+  //   }
+  //
+  //   return {'content': buffer.toString(), 'images': images};
+  // }
+
   Map<String, dynamic> _serializeForStorage() {
     final buffer = StringBuffer();
     final images = <String>[];
@@ -342,7 +388,27 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
           break;
 
         default:
-          buffer.writeln('${b.controller.text}\n');
+          if (b.isBullet) {
+            // Split by newlines and add bullet to each line
+            final lines = b.controller.text.split('\n');
+            for (final line in lines) {
+              if (line.trim().isNotEmpty) {
+                buffer.writeln('- $line');
+              }
+            }
+            buffer.writeln();
+          } else if (b.isNumbered) {
+            // Split by newlines and add numbers to each line
+            final lines = b.controller.text.split('\n');
+            for (int i = 0; i < lines.length; i++) {
+              if (lines[i].trim().isNotEmpty) {
+                buffer.writeln('${i + 1}. ${lines[i]}');
+              }
+            }
+            buffer.writeln();
+          } else {
+            buffer.writeln('${b.controller.text}\n');
+          }
       }
     }
 
@@ -357,6 +423,74 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       }
     }
     return "Untitled Article";
+  }
+
+  void _toggleBold() {
+    final block = _blocks[_activeIndex];
+    final c = block.controller;
+    final sel = c.selection;
+
+    if (!sel.isValid || sel.isCollapsed) return;
+
+    final text = c.text;
+    final selected = text.substring(sel.start, sel.end);
+
+    final before = text.substring(0, sel.start);
+    final after = text.substring(sel.end);
+
+    final newText = "$before**$selected**$after";
+
+    c.text = newText;
+    c.selection = TextSelection.collapsed(
+      offset: ("$before**$selected**").length,
+    );
+
+    setState(() {});
+  }
+
+  void _toggleItalic() {
+    final block = _blocks[_activeIndex];
+    final c = block.controller;
+    final sel = c.selection;
+
+    if (!sel.isValid || sel.isCollapsed) return;
+
+    final text = c.text;
+    final selected = text.substring(sel.start, sel.end);
+
+    final before = text.substring(0, sel.start);
+    final after = text.substring(sel.end);
+
+    // Use single asterisk for italic
+    final newText = "$before*$selected*$after";
+
+    c.text = newText;
+    c.selection = TextSelection.collapsed(
+      offset: sel.start + selected.length + 2,
+    );
+
+    setState(() {});
+  }
+
+  void _toggleBullet() {
+    final block = _blocks[_activeIndex];
+
+    if (block.type != BlockType.paragraph) return;
+    setState(() {
+      block.isBullet = !block.isBullet;
+      if (block.isBullet) block.isNumbered = false;
+    });
+  }
+
+  void _toggleNumbered() {
+    final block = _blocks[_activeIndex];
+
+    if (block.type != BlockType.paragraph) return;
+
+    setState(() {
+      block.isNumbered = !block.isNumbered;
+      if (block.isNumbered) block.isBullet = false;
+    });
   }
 
   @override
@@ -437,13 +571,27 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
         ),
       ),
 
-      // BODY
-      body: ListView.builder(
+      // body: ListView.builder(
+      //   padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+      //   itemCount: _blocks.length,
+      //   itemBuilder: (_, i) {
+      //     final b = _blocks[i];
+      //
+      //     return KeyedSubtree(key: ValueKey(b.id), child: _buildBlock(b, i));
+      //   },
+      // ),
+      body: ReorderableListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
         itemCount: _blocks.length,
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            if (newIndex > oldIndex) newIndex--;
+            final item = _blocks.removeAt(oldIndex);
+            _blocks.insert(newIndex, item);
+          });
+        },
         itemBuilder: (_, i) {
           final b = _blocks[i];
-
           return KeyedSubtree(key: ValueKey(b.id), child: _buildBlock(b, i));
         },
       ),
@@ -452,22 +600,28 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       bottomNavigationBar: EditorToolbar(
         onHeading: _toHeading,
         onQuote: _toQuote,
-        onBold: () {},
-        onItalic: () {},
+        onBold: _toggleBold,
+        onItalic: () {
+          _toggleItalic();
+        },
         onImage: _addImage,
+        onBullet: _toggleBullet,
+        onNumbered: _toggleNumbered,
       ),
     );
   }
 
-  Widget _buildBlock(EditorBlock b, int i) {
-    if (b.type == BlockType.image) {
+  Widget _buildBlock1(EditorBlock editorBlock, int i) {
+    if (editorBlock.type == BlockType.image) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.only(
+          left: editorBlock.controller.text.startsWith("• ") ? 16 : 0,
+        ),
         child: Stack(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.file(b.image!),
+              child: Image.file(editorBlock.image!),
             ),
             Positioned(
               top: 6,
@@ -476,7 +630,7 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
                   setState(() {
-                    final file = b.image!;
+                    final file = editorBlock.image!;
                     ImagePersistenceHelper.deleteImage(file.path);
                     _blocks.removeAt(i);
 
@@ -498,9 +652,132 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     }
 
     return TextField(
-      controller: b.controller,
+      controller: editorBlock.controller,
+      readOnly: editorBlock.readOnly,
       maxLines: null,
-      style: _style(b),
+      style: _style(editorBlock),
+      decoration: const InputDecoration(
+        hintText: 'Tell your story...',
+        border: InputBorder.none,
+      ),
+      onTap: () => _setActive(i),
+      onChanged: (_) => _autoSaveDraft(),
+    );
+  }
+
+  Widget _buildBlock(EditorBlock editorBlock, int i) {
+    if (editorBlock.type == BlockType.image) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(editorBlock.image!),
+            ),
+            Positioned(
+              top: 6,
+              right: 6,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    final file = editorBlock.image!;
+                    ImagePersistenceHelper.deleteImage(file.path);
+                    _blocks.removeAt(i);
+
+                    if (_blocks.isEmpty) {
+                      _blocks.add(EditorBlock.paragraph());
+                    }
+
+                    _activeIndex = (_activeIndex - 1).clamp(
+                      0,
+                      _blocks.length - 1,
+                    );
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // For bullet lists, show bullet indicator
+    if (editorBlock.isBullet) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 12, right: 8),
+            child: Text(
+              '•',
+              style: _style(editorBlock).copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: editorBlock.controller,
+              readOnly: editorBlock.readOnly,
+              maxLines: null,
+              style: _style(editorBlock),
+              decoration: const InputDecoration(
+                hintText: 'List item...',
+                border: InputBorder.none,
+              ),
+              onTap: () => _setActive(i),
+              onChanged: (_) => _autoSaveDraft(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (editorBlock.isNumbered) {
+      // Calculate the actual number based on previous numbered items
+      int number = 1;
+      for (int j = 0; j < i; j++) {
+        if (_blocks[j].isNumbered) number++;
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 12, right: 8),
+            child: SizedBox(
+              width: 24,
+              child: Text(
+                '$number.',
+                style: _style(
+                  editorBlock,
+                ).copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: editorBlock.controller,
+              readOnly: editorBlock.readOnly,
+              maxLines: null,
+              style: _style(editorBlock),
+              decoration: const InputDecoration(
+                hintText: 'List item...',
+                border: InputBorder.none,
+              ),
+              onTap: () => _setActive(i),
+              onChanged: (_) => _autoSaveDraft(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return TextField(
+      controller: editorBlock.controller,
+      readOnly: editorBlock.readOnly,
+      maxLines: null,
+      style: _style(editorBlock),
       decoration: const InputDecoration(
         hintText: 'Tell your story...',
         border: InputBorder.none,

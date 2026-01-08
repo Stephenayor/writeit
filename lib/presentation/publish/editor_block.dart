@@ -9,6 +9,9 @@ class EditorBlock {
   TextEditingController controller;
   File? image;
   final String id = UniqueKey().toString();
+  bool readOnly = false;
+  bool isBullet = false;
+  bool isNumbered = false;
 
   EditorBlock.paragraph()
     : type = BlockType.paragraph,
