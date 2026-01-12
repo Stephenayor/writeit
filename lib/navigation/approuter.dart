@@ -96,7 +96,7 @@ final router = GoRouter(
     ),
 
     GoRoute(
-      path: '/select-category',
+      path: Routes.selectCategoryScreen,
       builder: (_, __) => SelectCategoryScreen(),
     ),
 

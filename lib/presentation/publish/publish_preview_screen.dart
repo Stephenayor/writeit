@@ -58,32 +58,35 @@ class PublishPreviewScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // 🔹 Preview card
+          // Preview card
           PreviewCard(title: title, images: images),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // 🔹 Category row
-          ListTile(
-            title: Text(
-              "Category",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.3,
-                color: isDark ? Colors.white : Colors.black87,
+          // Category row
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListTile(
+              title: Text(
+                "Category",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.3,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
+              subtitle: selectedCategory == null
+                  ? const Text(
+                      "No category selected",
+                      style: TextStyle(fontSize: 13),
+                    )
+                  : Text(selectedCategory.name),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                context.push(Routes.selectCategoryScreen);
+              },
             ),
-            subtitle: selectedCategory == null
-                ? const Text(
-                    "No category selected",
-                    style: TextStyle(fontSize: 14),
-                  )
-                : Text(selectedCategory.name),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              context.push(Routes.selectCategoryScreen);
-            },
           ),
 
           const Spacer(),

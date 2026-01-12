@@ -37,29 +37,6 @@ class PreviewCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // if (images.isNotEmpty)
-              //   ClipRRect(
-              //     borderRadius: const BorderRadius.vertical(
-              //       top: Radius.circular(12),
-              //     ),
-              //     child: Image.file(
-              //       File(images.first),
-              //       height: 180,
-              //       width: double.infinity,
-              //       fit: BoxFit.cover,
-              //     ),
-              //   ),
-              // Padding(
-              //   padding: const EdgeInsets.all(12),
-              //   child: Text(
-              //     title,
-              //     style: const TextStyle(
-              //       fontSize: 18,
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //NEW
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
