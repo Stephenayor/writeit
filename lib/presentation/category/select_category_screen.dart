@@ -17,7 +17,6 @@ class _SelectCategoryScreenState extends ConsumerState<SelectCategoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize with current selection
     final currentSelection = ref.read(selectedCategoryProvider);
     _tempSelectedId = currentSelection?.id;
   }
