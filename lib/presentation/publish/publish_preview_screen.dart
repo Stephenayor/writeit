@@ -25,6 +25,7 @@ class PublishPreviewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCategory = ref.watch(selectedCategoryProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     ref.listen<ApiResponse<String>>(articlePublishProvider, (prev, next) async {
       if (next is Success<String>) {
@@ -64,13 +65,24 @@ class PublishPreviewScreen extends ConsumerWidget {
 
           // 🔹 Category row
           ListTile(
-            title: const Text("Category"),
+            title: Text(
+              "Category",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.3,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
             subtitle: selectedCategory == null
-                ? const Text("No category selected")
+                ? const Text(
+                    "No category selected",
+                    style: TextStyle(fontSize: 14),
+                  )
                 : Text(selectedCategory.name),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              context.push('/select-category');
+              context.push(Routes.selectCategoryScreen);
             },
           ),
 

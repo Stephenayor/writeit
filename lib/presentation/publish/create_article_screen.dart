@@ -548,9 +548,9 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text(
-                              'Publish',
+                              'Next',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 color: Color(0xFF4CAF50),
                                 fontWeight: FontWeight.w600,
                               ),
