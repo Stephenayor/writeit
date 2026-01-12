@@ -1244,12 +1244,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     final title = _extractTitle();
     final content = _controller.text;
     final images = List<String>.from(_images);
-
-    await createArticleViewModel.publishArticle(
-      title: title,
-      rawContent: content,
-      localImagePaths: images,
-    );
   }
 
   Widget _buildToolButton({

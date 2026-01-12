@@ -8,6 +8,7 @@ import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
 import '../core/notifications/notifications_notifier.dart';
 import '../core/utils/user_session_helper.dart';
 import '../data/models/app_user.dart';
+import '../data/models/category.dart';
 import '../data/repositories/article_repository.dart';
 import '../data/repositories/draft_repository.dart';
 import '../data/repositories/profile_repository.dart';
@@ -70,3 +71,14 @@ final notificationsProvider =
     StateNotifierProvider<NotificationsNotifier, bool>((ref) {
       return NotificationsNotifier();
     });
+
+final categoriesProvider = Provider<List<Category>>((ref) {
+  return [
+    Category(id: "tech", name: "Technology"),
+    Category(id: "business", name: "Business"),
+    Category(id: "life", name: "Lifestyle"),
+    Category(id: "programming", name: "Programming"),
+  ];
+});
+
+final selectedCategoryProvider = StateProvider<Category?>((ref) => null);

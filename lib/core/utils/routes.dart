@@ -10,4 +10,7 @@ class Routes {
   static const String profileScreen = '/profile-screen';
   static const String editProfileScreen = '/edit-profile-screen';
   static const String searchScreen = '/search-screen';
+  static const String publishPreviewScreen = '/publish-preview-screen';
+  static const String selectCategoryScreen = '/select-category-screen';
+  static const String savedScreen = '/saved-screen';
 }

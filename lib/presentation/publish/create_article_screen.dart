@@ -173,23 +173,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     }
   }
 
-  String _serializeBlocks() {
-    return _blocks
-        .map((b) {
-          switch (b.type) {
-            case BlockType.heading:
-              return '# ${b.controller.text}';
-            case BlockType.quote:
-              return '> ${b.controller.text}';
-            case BlockType.image:
-              return '[IMAGE:${b.image!.path}]';
-            default:
-              return b.controller.text;
-          }
-        })
-        .join('\n\n');
-  }
-
   void _saveDraft() async {
     await _autoSaveDraft(silent: false);
   }
@@ -320,12 +303,22 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     final content = data['content'] as String;
     final images = data['images'] as List<String>;
 
-    final title = _extractTitle();
+    final articleTitlePayLoad = _extractTitle();
 
-    await publisher.publishArticle(
-      title: title,
-      rawContent: content,
-      localImagePaths: images,
+    // await publisher.publishArticle(
+    //   title: articleTitlePayLoad,
+    //   rawContent: content,
+    //   localImagePaths: images,
+    // );
+
+    context.push(
+      Routes.publishPreviewScreen,
+      extra: {
+        'title': articleTitlePayLoad,
+        'content': data['content'] as String,
+        'images': data['images'] as List<String>,
+        "draftID": _currentDraftId,
+      },
     );
   }
 
@@ -504,7 +497,7 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
         ref
             .read(draftsViewModelProvider.notifier)
             .deleteDraft(_currentDraftId!);
-
+        ref.read(selectedCategoryProvider.notifier).state = null;
         context.go(Routes.home);
       } else if (next is Failure<String>) {
         ScaffoldMessenger.of(

@@ -9,7 +9,9 @@ import 'package:writeit/presentation/publish/create_article_screen.dart';
 import 'package:writeit/presentation/publish/drafts/drafts_list_screen.dart';
 import '../core/utils/routes.dart';
 import '../data/models/article.dart';
+import '../presentation/category/select_category_screen.dart';
 import '../presentation/publish/detail/article_detail_screen.dart';
+import '../presentation/publish/publish_preview_screen.dart';
 import '../splash_screen.dart';
 import 'main_navigation_wrapper.dart';
 
@@ -76,6 +78,26 @@ final router = GoRouter(
           photoUrl: data['photoUrl'],
         );
       },
+    ),
+
+    GoRoute(
+      path: Routes.publishPreviewScreen,
+      name: 'publishPreview',
+      builder: (context, state) {
+        final map = state.extra as Map<String, dynamic>;
+
+        return PublishPreviewScreen(
+          title: map['title'],
+          content: map['content'],
+          images: List<String>.from(map['images']),
+          draftID: map['draftId'],
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/select-category',
+      builder: (_, __) => SelectCategoryScreen(),
     ),
 
     // Shell route for screens with bottom navigation

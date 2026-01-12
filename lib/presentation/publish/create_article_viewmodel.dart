@@ -11,6 +11,7 @@ class CreateArticleViewModel extends StateNotifier<ApiResponse<String>> {
     required String title,
     required String rawContent,
     required List<String> localImagePaths,
+    required String category,
   }) async {
     if (title.trim().isEmpty && rawContent.trim().isEmpty) {
       state = Failure<String>("Article cannot be empty");
@@ -24,6 +25,7 @@ class CreateArticleViewModel extends StateNotifier<ApiResponse<String>> {
         title: title,
         rawContent: rawContent,
         localImagePaths: localImagePaths,
+        category: category,
       );
       state = Success<String>(articleId);
     } catch (e) {
