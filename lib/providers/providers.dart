@@ -52,22 +52,22 @@ final articlePublishProvider =
     });
 
 final homeViewModelProvider = StreamProvider.autoDispose((ref) {
-  final repo = getIt<ArticleRepository>();
-  return repo.fetchLatestArticles();
+  final articleRepository = getIt<ArticleRepository>();
+  return articleRepository.fetchLatestArticles();
 });
 
 final profileStreamProvider = StreamProvider<AppUser?>((ref) {
-  final repo = getIt<ProfileRepository>();
+  final profileRepository = getIt<ProfileRepository>();
   return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
     if (user == null) return null;
-    return await repo.fetchUser();
+    return await profileRepository.fetchUser();
   });
 });
 
 final profileViewModelProvider =
     StateNotifierProvider<ProfileViewModel, AsyncValue<AppUser>>((ref) {
-      final repo = getIt<ProfileRepository>();
-      return ProfileViewModel(repo);
+      final profileRepository = getIt<ProfileRepository>();
+      return ProfileViewModel(profileRepository);
     });
 
 final notificationsProvider =
@@ -104,8 +104,8 @@ final repliesProvider = StreamProvider.family<List<Reply>, ReplyArgs>((
   ref,
   args,
 ) {
-  final repo = ref.watch(commentRepositoryProvider);
-  return repo.watchReplies(args.articleId, args.commentId);
+  final commentRepository = ref.watch(commentRepositoryProvider);
+  return commentRepository.watchReplies(args.articleId, args.commentId);
 });
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
@@ -123,6 +123,6 @@ final commentsStreamProvider = StreamProvider.family<List<Comment>, String>((
   ref,
   articleId,
 ) {
-  final repo = ref.watch(commentRepositoryProvider);
-  return repo.fetchComments(articleId);
+  final commentsRepository = ref.watch(commentRepositoryProvider);
+  return commentsRepository.fetchComments(articleId);
 });
