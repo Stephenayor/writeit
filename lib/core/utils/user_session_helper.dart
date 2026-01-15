@@ -61,4 +61,10 @@ class UserSessionHelper extends StateNotifier<AppUser?> {
     await _auth.signOut();
     state = null;
   }
+
+  @override
+  void dispose() {
+    _userSubscription?.cancel();
+    super.dispose();
+  }
 }

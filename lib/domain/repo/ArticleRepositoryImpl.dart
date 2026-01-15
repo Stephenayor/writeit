@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:writeit/core/utils/constants.dart';
 import 'package:writeit/data/repositories/article_repository.dart';
 
@@ -38,7 +39,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
     articleTitle = title;
 
     try {
-      final articlesRef = _firestore.collection('articles');
+      final articlesRef = _firestore.collection(Constants.articles);
       final articleDocRef = articlesRef.doc();
       final articleId = articleDocRef.id;
 
@@ -48,7 +49,9 @@ class ArticleRepositoryImpl implements ArticleRepository {
         localImagePaths: localImagePaths,
       );
 
-      print("Uploaded URLs: $articleImageUrl");
+      if (kDebugMode) {
+        print("Uploaded URLs: $articleImageUrl");
+      }
       final contentWithUrls = _replaceImageMarkersWithUrls(
         rawContent,
         articleImageUrl,
@@ -100,7 +103,9 @@ class ArticleRepositoryImpl implements ArticleRepository {
     required String articleId,
     required List<String> localImagePaths,
   }) async {
-    print("Local paths received: $localImagePaths");
+    if (kDebugMode) {
+      print("Local paths received: $localImagePaths");
+    }
 
     final urls = <String>[];
 

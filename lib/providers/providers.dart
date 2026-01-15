@@ -9,14 +9,20 @@ import '../core/notifications/notifications_notifier.dart';
 import '../core/utils/user_session_helper.dart';
 import '../data/models/app_user.dart';
 import '../data/models/category.dart';
+import '../data/models/comment.dart';
+import '../data/models/reply_args.dart';
 import '../data/repositories/article_repository.dart';
+import '../data/repositories/comment_repository.dart';
 import '../data/repositories/draft_repository.dart';
 import '../data/repositories/profile_repository.dart';
 import '../domain/repo/AuthRepositoryImpl.dart';
+import '../domain/repo/CommentRepositoryImpl.dart';
 import '../presentation/auth/signin/signin_state.dart';
 import '../presentation/auth/signin/signinviewmodel.dart';
 import '../presentation/auth/signup/signup_state.dart';
 import '../presentation/auth/signup/signup_viewmodel.dart';
+import '../presentation/comments/comments_viewmodel.dart';
+import '../presentation/comments/replies/replies_viewmodel.dart';
 import '../presentation/profile/profile_viewmodel.dart';
 import '../presentation/publish/create_article_viewmodel.dart';
 import '../presentation/publish/drafts/drafts_viewmodel.dart';
@@ -49,10 +55,6 @@ final homeViewModelProvider = StreamProvider.autoDispose((ref) {
   return repo.fetchLatestArticles();
 });
 
-final userSessionProvider = StateNotifierProvider<UserSessionHelper, AppUser?>(
-  (ref) => getIt<UserSessionHelper>(),
-);
-
 final profileStreamProvider = StreamProvider<AppUser?>((ref) {
   final repo = getIt<ProfileRepository>();
   return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
@@ -82,3 +84,44 @@ final categoriesProvider = Provider<List<Category>>((ref) {
 });
 
 final selectedCategoryProvider = StateProvider<Category?>((ref) => null);
+
+final commentRepositoryProvider = Provider<CommentRepository>((ref) {
+  return CommentRepositoryImpl();
+});
+
+// final commentsProvider = StreamProvider.family<List<Comment>, String>((
+//   ref,
+//   articleId,
+// ) {
+//   final repo = ref.watch(commentRepositoryProvider);
+//   return repo.getComments(articleId);
+// });
+
+final commentsProvider =
+    StateNotifierProvider.family<
+      CommentsNotifier,
+      AsyncValue<List<Comment>>,
+      String
+    >((ref, articleId) {
+      final repo = ref.read(commentRepositoryProvider);
+      return CommentsNotifier(repo, articleId);
+    });
+
+final repliesProvider = StreamProvider.family<List<Comment>, ReplyArgs>((
+  ref,
+  args,
+) {
+  final repo = ref.watch(commentRepositoryProvider);
+  return repo.watchReplies(args.articleId, args.commentId);
+});
+
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
+  return FirebaseAuth.instance;
+});
+
+final userSessionProvider = StateNotifierProvider<UserSessionHelper, AppUser?>((
+  ref,
+) {
+  final auth = ref.watch(firebaseAuthProvider);
+  return UserSessionHelper(auth);
+});

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:writeit/data/repositories/comment_repository.dart';
 import 'package:writeit/data/repositories/draft_repository.dart';
+import 'package:writeit/domain/repo/CommentRepositoryImpl.dart';
 import 'package:writeit/domain/repo/DraftRepositoryImpl.dart';
 import '../../data/repositories/article_repository.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -21,4 +23,5 @@ void setupLocator() {
     () => UserSessionHelper(FirebaseAuth.instance),
   );
   getIt.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl());
+  getIt.registerLazySingleton<CommentRepository>(() => CommentRepositoryImpl());
 }
