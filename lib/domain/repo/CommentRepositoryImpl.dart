@@ -122,20 +122,6 @@ class CommentRepositoryImpl implements CommentRepository {
     });
   }
 
-  // @override
-  // Stream<List<Comment>> getComments(String articleId) {
-  //   return FirebaseFirestore.instance
-  //       .collection(Constants.articles)
-  //       .doc(articleId)
-  //       .collection(Constants.comments)
-  //       .orderBy('createdAt', descending: true)
-  //       .snapshots()
-  //       .map(
-  //         (snapshot) =>
-  //             snapshot.docs.map((doc) => Comment.fromDoc(doc)).toList(),
-  //       );
-  // }
-
   @override
   Future<List<Comment>> getComments(String articleId) async {
     final snap = await FirebaseFirestore.instance
