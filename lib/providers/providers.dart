@@ -10,6 +10,7 @@ import '../core/utils/user_session_helper.dart';
 import '../data/models/app_user.dart';
 import '../data/models/category.dart';
 import '../data/models/comment.dart';
+import '../data/models/reply.dart';
 import '../data/models/reply_args.dart';
 import '../data/repositories/article_repository.dart';
 import '../data/repositories/comment_repository.dart';
@@ -33,7 +34,7 @@ final signupViewModelProvider =
       return SignupViewModel(authRepo);
     });
 
-final signinViewModelProvider =
+final signInViewModelProvider =
     StateNotifierProvider<SigninViewModel, SigninState>((ref) {
       return SigninViewModel(AuthRepositoryImpl());
     });
@@ -89,14 +90,6 @@ final commentRepositoryProvider = Provider<CommentRepository>((ref) {
   return CommentRepositoryImpl();
 });
 
-// final commentsProvider = StreamProvider.family<List<Comment>, String>((
-//   ref,
-//   articleId,
-// ) {
-//   final repo = ref.watch(commentRepositoryProvider);
-//   return repo.getComments(articleId);
-// });
-
 final commentsProvider =
     StateNotifierProvider.family<
       CommentsNotifier,
@@ -107,7 +100,7 @@ final commentsProvider =
       return CommentsNotifier(repo, articleId);
     });
 
-final repliesProvider = StreamProvider.family<List<Comment>, ReplyArgs>((
+final repliesProvider = StreamProvider.family<List<Reply>, ReplyArgs>((
   ref,
   args,
 ) {

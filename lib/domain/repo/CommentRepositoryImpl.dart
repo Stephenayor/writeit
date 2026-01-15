@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:writeit/core/utils/constants.dart';
 
 import '../../data/models/comment.dart';
+import '../../data/models/reply.dart';
 import '../../data/repositories/comment_repository.dart';
 
 class CommentRepositoryImpl implements CommentRepository {
@@ -21,7 +22,7 @@ class CommentRepositoryImpl implements CommentRepository {
         .collection(Constants.articles)
         .doc(articleId);
 
-    FirebaseFirestore.instance.runTransaction((tx) async {
+    await FirebaseFirestore.instance.runTransaction((tx) async {
       final snap = await tx.get(doc);
 
       if (snap.exists) {
@@ -182,7 +183,7 @@ class CommentRepositoryImpl implements CommentRepository {
   }
 
   @override
-  Stream<List<Comment>> watchReplies(String articleId, String commentId) {
+  Stream<List<Reply>> watchReplies(String articleId, String commentId) {
     return FirebaseFirestore.instance
         .collection(Constants.articles)
         .doc(articleId)
@@ -191,6 +192,6 @@ class CommentRepositoryImpl implements CommentRepository {
         .collection(Constants.replies)
         .orderBy('createdAt')
         .snapshots()
-        .map((snap) => snap.docs.map((e) => Comment.fromDoc(e)).toList());
+        .map((snap) => snap.docs.map((e) => Reply.fromDoc(e)).toList());
   }
 }

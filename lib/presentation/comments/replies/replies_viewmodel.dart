@@ -15,10 +15,10 @@ class RepliesNotifier extends StateNotifier<AsyncValue<List<Comment>>> {
   RepliesNotifier(this.repo, this.articleId, this.commentId)
     : super(const AsyncLoading()) {
     // Changed to AsyncLoading
-    load(); // Call load immediately
+    getReplies(); // Call load immediately
   }
 
-  Future<void> load() async {
+  Future<void> getReplies() async {
     try {
       state = const AsyncLoading();
       final replies = await repo.getReplies(articleId, commentId);
@@ -48,7 +48,7 @@ class RepliesNotifier extends StateNotifier<AsyncValue<List<Comment>>> {
 
     try {
       await repo.addReply(articleId, commentId, text);
-      await load();
+      await getReplies();
     } catch (_) {
       state = AsyncData(prev);
     }

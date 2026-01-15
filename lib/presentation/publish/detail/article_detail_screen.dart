@@ -1,25 +1,29 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import '../../../core/utils/constants.dart';
 import '../../../data/models/article.dart';
+import '../../../providers/providers.dart';
 import '../../comments/article_comment_composer.dart';
 import '../../comments/comments_sheet.dart';
 
-class ArticleDetailScreen extends StatelessWidget {
+class ArticleDetailScreen extends ConsumerWidget {
   final Article article;
 
   const ArticleDetailScreen({super.key, required this.article});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
     final currentUserName = user?.displayName;
     final currentUserAvatar = user?.photoURL;
     final commentsCount = article.commentsCount;
+    final commentsRepository = ref.read(commentRepositoryProvider);
 
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
@@ -35,24 +39,48 @@ class ArticleDetailScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          StreamBuilder<bool>(
+            stream: FirebaseFirestore.instance
+                .collection(Constants.articles)
+                .doc(article.id)
+                .collection(Constants.likes)
+                .doc(FirebaseAuth.instance.currentUser!.uid)
+                .snapshots()
+                .map((doc) => doc.exists),
+            builder: (context, snapshot) {
+              final isLiked = snapshot.data ?? false;
+
+              return IconButton(
+                onPressed: () {
+                  commentsRepository.toggleLike(
+                    article.id,
+                    FirebaseAuth.instance.currentUser!.uid,
+                  );
+                },
+                icon: Icon(
+                  isLiked ? Icons.favorite : Icons.favorite_border,
+                  color: isLiked ? Colors.red : Colors.grey,
+                ),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(
               borderRadius: BorderRadius.circular(24),
               onTap: () => showComments(context, article.id),
               child: Stack(
-                alignment: Alignment.center,
+                clipBehavior: Clip.none,
                 children: [
                   const Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(12),
                     child: Icon(Icons.comment_outlined, size: 26),
                   ),
 
-                  // 🔴 Badge
                   if (commentsCount > 0)
                     Positioned(
-                      right: 4,
-                      top: 4,
+                      right: -2,
+                      top: -2,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,

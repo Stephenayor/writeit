@@ -339,7 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '1.2K',
+                    '${article.likesCount} likes',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.grey[500] : Colors.grey[600],

@@ -23,15 +23,16 @@ class Comment {
 
   factory Comment.fromDoc(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
+
     return Comment(
-      id: d['id'],
-      userId: d['userId'],
-      userName: d['userName'],
-      text: d['text'],
-      createdAt: (d['createdAt'] as Timestamp).toDate(),
+      id: doc.id,
+      userId: d['userId'] ?? '',
+      userName: d['userName'] ?? 'Unknown',
+      text: d['text'] ?? '',
+      createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       likesCount: d['likesCount'] ?? 0,
       repliesCount: d['repliesCount'] ?? 0,
-      avatarUrl: d['avatarUrl'],
+      avatarUrl: d['avatarUrl'] ?? '',
     );
   }
 }

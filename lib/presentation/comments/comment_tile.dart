@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:writeit/data/models/reply.dart';
 import '../../core/utils/constants.dart';
 import '../../data/models/comment.dart';
 import '../../data/models/reply_args.dart';
@@ -31,7 +32,7 @@ class _CommentTileState extends ConsumerState<CommentTile> {
         ? ref.watch(
             repliesProvider(ReplyArgs(widget.articleId, widget.comment.id)),
           )
-        : const AsyncData(<Comment>[]);
+        : const AsyncData(<Reply>[]);
 
     final currentUser = ref.watch(userSessionProvider);
     final avatarUrl = widget.comment.avatarUrl;
@@ -118,7 +119,16 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                 children: list
                     .map(
                       (r) => ListTile(
-                        title: Text(r.userId),
+                        leading: CircleAvatar(
+                          radius: 14,
+                          backgroundImage: r.avatarUrl != null
+                              ? NetworkImage(r.avatarUrl!)
+                              : null,
+                          child: r.avatarUrl == null
+                              ? const Icon(Icons.person, size: 14)
+                              : null,
+                        ),
+                        title: Text(r.userName),
                         subtitle: Text(r.text),
                       ),
                     )
@@ -179,6 +189,12 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                   //     )
                   //     .addReply(text);
 
+                  addReply(
+                    widget.articleId,
+                    widget.comment.id,
+                    controller.text,
+                  );
+
                   // Expand to show the new reply
                   if (!expanded) {
                     setState(() => expanded = true);
@@ -200,26 +216,29 @@ class _CommentTileState extends ConsumerState<CommentTile> {
     if (diff.inMinutes > 0) return "${diff.inMinutes}m ago";
     return "just now";
   }
+}
 
-  Future<void> addReply(String articleId, String commentId, String text) async {
-    await FirebaseFirestore.instance
-        .collection(Constants.articles)
-        .doc(articleId)
-        .collection(Constants.comments)
-        .doc(commentId)
-        .collection(Constants.replies)
-        .add({
-          'text': text,
-          'createdAt': FieldValue.serverTimestamp(),
-          'userId': FirebaseAuth.instance.currentUser!.uid,
-        });
+Future<void> addReply(String articleId, String commentId, String text) async {
+  await FirebaseFirestore.instance
+      .collection(Constants.articles)
+      .doc(articleId)
+      .collection(Constants.comments)
+      .doc(commentId)
+      .collection(Constants.replies)
+      .add({
+        'text': text,
+        'createdAt': FieldValue.serverTimestamp(),
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'userName':
+            FirebaseAuth.instance.currentUser!.displayName ?? 'Anonymous',
+        'avatarUrl': FirebaseAuth.instance.currentUser!.photoURL,
+      });
 
-    // Also increment repliesCount on parent comment
-    await FirebaseFirestore.instance
-        .collection(Constants.articles)
-        .doc(articleId)
-        .collection(Constants.comments)
-        .doc(commentId)
-        .update({'repliesCount': FieldValue.increment(1)});
-  }
+  // Also increment repliesCount on parent comment
+  await FirebaseFirestore.instance
+      .collection(Constants.articles)
+      .doc(articleId)
+      .collection(Constants.comments)
+      .doc(commentId)
+      .update({'repliesCount': FieldValue.increment(1)});
 }

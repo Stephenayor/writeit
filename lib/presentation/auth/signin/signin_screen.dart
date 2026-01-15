@@ -12,11 +12,11 @@ class SigninScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(signinViewModelProvider);
-    final viewModel = ref.read(signinViewModelProvider.notifier);
+    final state = ref.watch(signInViewModelProvider);
+    final viewModel = ref.read(signInViewModelProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    ref.listen<SigninState>(signinViewModelProvider, (prev, next) {
+    ref.listen<SigninState>(signInViewModelProvider, (prev, next) {
       if (next.isLoading && !(prev?.isLoading ?? false)) {
         AppLoadingDialog.show(
           context,

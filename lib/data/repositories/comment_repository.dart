@@ -1,3 +1,5 @@
+import 'package:writeit/data/models/reply.dart';
+
 import '../models/comment.dart';
 
 abstract class CommentRepository {
@@ -11,5 +13,5 @@ abstract class CommentRepository {
   Future<List<Comment>> getComments(String articleId);
   Stream<List<Comment>> fetchComments(String articleId);
   Future<List<Comment>> getReplies(String articleId, String commentId);
-  Stream<List<Comment>> watchReplies(String articleId, String commentId);
+  Stream<List<Reply>> watchReplies(String articleId, String commentId);
 }
