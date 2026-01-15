@@ -7,11 +7,12 @@ import 'comment_tile.dart';
 
 class CommentsSheet extends ConsumerWidget {
   final String articleId;
+
   const CommentsSheet({super.key, required this.articleId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final comments = ref.watch(commentsProvider(articleId));
+    final comments = ref.watch(commentsStreamProvider(articleId));
 
     return DraggableScrollableSheet(
       expand: false,
@@ -25,14 +26,19 @@ class CommentsSheet extends ConsumerWidget {
             ),
             Expanded(
               child: comments.when(
-                data: (list) => ListView.builder(
-                  controller: controller,
-                  itemCount: list.length,
-                  itemBuilder: (_, i) =>
-                      CommentTile(articleId: articleId, comment: list[i]),
-                ),
+                data: (comments) {
+                  if (comments.isEmpty) {
+                    return const Center(child: Text("No Comments Yet"));
+                  }
+                  return ListView.builder(
+                    controller: controller,
+                    itemCount: comments.length,
+                    itemBuilder: (_, i) =>
+                        CommentTile(articleId: articleId, comment: comments[i]),
+                  );
+                },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text("Failed to load comments")),
+                error: (e, _) => Center(child: Text("Failed to Load Comments")),
               ),
             ),
             CommentInput(articleId: articleId),

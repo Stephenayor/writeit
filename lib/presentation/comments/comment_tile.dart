@@ -170,15 +170,14 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                   // Close the modal
                   Navigator.of(modalContext).pop();
 
-                  // Add the reply
+                  //Add the reply
                   // await ref
                   //     .read(
                   //       repliesProvider(
                   //         ReplyArgs(widget.articleId, widget.comment.id),
-                  //       ).notifier,
+                  //       ),
                   //     )
                   //     .addReply(text);
-                  addReply(widget.articleId, widget.comment.id, text);
 
                   // Expand to show the new reply
                   if (!expanded) {

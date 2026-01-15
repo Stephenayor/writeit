@@ -10,10 +10,10 @@ class CommentsNotifier extends StateNotifier<AsyncValue<List<Comment>>> {
   final String articleId;
 
   CommentsNotifier(this.repo, this.articleId) : super(const AsyncLoading()) {
-    load();
+    getComments();
   }
 
-  Future<void> load() async {
+  Future<void> getComments() async {
     final comments = await repo.getComments(articleId);
     state = AsyncData(comments);
   }
@@ -37,7 +37,7 @@ class CommentsNotifier extends StateNotifier<AsyncValue<List<Comment>>> {
 
     try {
       await repo.addComment(articleId, text);
-      await load(); // resync
+      await getComments(); // resync
     } catch (_) {
       state = AsyncData(prev); // rollback
     }

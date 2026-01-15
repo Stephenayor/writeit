@@ -125,3 +125,11 @@ final userSessionProvider = StateNotifierProvider<UserSessionHelper, AppUser?>((
   final auth = ref.watch(firebaseAuthProvider);
   return UserSessionHelper(auth);
 });
+
+final commentsStreamProvider = StreamProvider.family<List<Comment>, String>((
+  ref,
+  articleId,
+) {
+  final repo = ref.watch(commentRepositoryProvider);
+  return repo.fetchComments(articleId);
+});

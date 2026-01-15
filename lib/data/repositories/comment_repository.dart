@@ -9,6 +9,7 @@ abstract class CommentRepository {
     String text,
   ) async {}
   Future<List<Comment>> getComments(String articleId);
+  Stream<List<Comment>> fetchComments(String articleId);
   Future<List<Comment>> getReplies(String articleId, String commentId);
   Stream<List<Comment>> watchReplies(String articleId, String commentId);
 }

@@ -22,6 +22,9 @@ class RepliesNotifier extends StateNotifier<AsyncValue<List<Comment>>> {
     try {
       state = const AsyncLoading();
       final replies = await repo.getReplies(articleId, commentId);
+      if (kDebugMode) {
+        print("Replies: $replies");
+      }
       state = AsyncData(replies);
     } catch (e, st) {
       state = AsyncError(e, st);

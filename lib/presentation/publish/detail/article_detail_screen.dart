@@ -10,6 +10,7 @@ import '../../comments/comments_sheet.dart';
 
 class ArticleDetailScreen extends StatelessWidget {
   final Article article;
+
   const ArticleDetailScreen({super.key, required this.article});
 
   @override
