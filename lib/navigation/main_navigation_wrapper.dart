@@ -174,7 +174,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
             Icon(
               icon,
               color: isSelected
-                  ? Colors.white70
+                  ? Colors.white
                   : (isDark ? Colors.grey[200] : Colors.white),
               size: 24,
             ),
@@ -186,7 +186,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected
                     ? (isDark ? Colors.grey[200] : Colors.white)
-                    : (isDark ? Colors.grey[200] : Colors.black54),
+                    : (isDark ? Colors.grey[200] : Colors.white70),
               ),
             ),
           ],

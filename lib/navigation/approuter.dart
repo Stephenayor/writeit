@@ -12,6 +12,7 @@ import '../data/models/article.dart';
 import '../presentation/category/select_category_screen.dart';
 import '../presentation/publish/detail/article_detail_screen.dart';
 import '../presentation/publish/publish_preview_screen.dart';
+import '../presentation/search/SearchScreen.dart';
 import '../splash_screen.dart';
 import 'main_navigation_wrapper.dart';
 
@@ -120,14 +121,12 @@ final router = GoRouter(
               NoTransitionPage(child: const ProfileScreen()),
         ),
 
-        // Add search and saved screens here when ready
-        // GoRoute(
-        //   path: Routes.searchScreen,
-        //   name: 'search',
-        //   pageBuilder: (context, state) => NoTransitionPage(
-        //     child: const SearchScreen(),
-        //   ),
-        // ),
+        GoRoute(
+          path: Routes.searchScreen,
+          name: 'search',
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const SearchScreen()),
+        ),
       ],
     ),
   ],

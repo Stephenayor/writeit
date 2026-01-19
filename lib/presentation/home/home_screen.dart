@@ -21,7 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = FirebaseAuth.instance.currentUser;
-    final feedState = ref.watch(homeViewModelProvider);
+    final homeViewModel = ref.watch(homeViewModelProvider);
     final profileState = ref.watch(userSessionProvider);
 
     return Scaffold(
@@ -143,7 +143,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 16),
             // Stories
             Expanded(
-              child: feedState.when(
+              child: homeViewModel.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text("Error loading stories")),
                 data: (articles) {
@@ -256,7 +256,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'in Career Programming',
+                          'writeIt',
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark ? Colors.grey[400] : Colors.grey[600],
