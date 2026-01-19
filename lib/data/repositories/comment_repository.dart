@@ -12,6 +12,5 @@ abstract class CommentRepository {
   ) async {}
   Future<List<Comment>> getComments(String articleId);
   Stream<List<Comment>> fetchComments(String articleId);
-  Future<List<Comment>> getReplies(String articleId, String commentId);
-  Stream<List<Reply>> watchReplies(String articleId, String commentId);
+  Stream<List<Reply>> fetchReplies(String articleId, String commentId);
 }

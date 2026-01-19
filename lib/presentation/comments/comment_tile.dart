@@ -94,52 +94,52 @@ class _CommentTileState extends ConsumerState<CommentTile> {
             ],
           ),
         ),
-        Row(
-          children: [
-            TextButton(
-              child: Text("${widget.comment.repliesCount} replies"),
-              onPressed: () {
-                setState(() => expanded = !expanded);
-              },
-            ),
-            TextButton(
-              child: const Text("Reply"),
-              onPressed: () {
-                showReplyInput(context, widget.comment);
-              },
-            ),
-          ],
-        ),
-
-        if (expanded)
-          repliesState.when(
-            data: (list) => Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Column(
-                children: list
-                    .map(
-                      (r) => ListTile(
-                        leading: CircleAvatar(
-                          radius: 14,
-                          backgroundImage: r.avatarUrl != null
-                              ? NetworkImage(r.avatarUrl!)
-                              : null,
-                          child: r.avatarUrl == null
-                              ? const Icon(Icons.person, size: 14)
-                              : null,
-                        ),
-                        title: Text(r.userName),
-                        subtitle: Text(r.text),
-                      ),
-                    )
-                    .toList(),
+        Padding(
+          padding: const EdgeInsets.only(left: 52.0),
+          child: Row(
+            children: [
+              TextButton(
+                child: Text("${widget.comment.repliesCount} replies"),
+                onPressed: () {
+                  setState(() => expanded = !expanded);
+                },
               ),
+              TextButton(
+                child: const Text("Reply"),
+                onPressed: () {
+                  showReplyInput(context, widget.comment);
+                },
+              ),
+            ],
+          ),
+        ),
+        if (expanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 52),
+            child: repliesState.when(
+              data: (list) => Column(
+                children: list.map((reply) {
+                  return ListTile(
+                    leading: CircleAvatar(
+                      radius: 14,
+                      backgroundImage: reply.avatarUrl != null
+                          ? NetworkImage(reply.avatarUrl!)
+                          : null,
+                      child: reply.avatarUrl == null
+                          ? const Icon(Icons.person, size: 14)
+                          : null,
+                    ),
+                    title: Text(reply.userName),
+                    subtitle: Text(reply.text),
+                  );
+                }).toList(),
+              ),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(),
+              ),
+              error: (e, st) => Text("Failed to load replies: $e"),
             ),
-            loading: () => const Padding(
-              padding: EdgeInsets.all(12),
-              child: CircularProgressIndicator(),
-            ),
-            error: (_, __) => const Text("Failed to Load Replies"),
           ),
       ],
     );
@@ -180,15 +180,6 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                   // Close the modal
                   Navigator.of(modalContext).pop();
 
-                  //Add the reply
-                  // await ref
-                  //     .read(
-                  //       repliesProvider(
-                  //         ReplyArgs(widget.articleId, widget.comment.id),
-                  //       ),
-                  //     )
-                  //     .addReply(text);
-
                   addReply(
                     widget.articleId,
                     widget.comment.id,
@@ -226,6 +217,7 @@ Future<void> addReply(String articleId, String commentId, String text) async {
       .doc(commentId)
       .collection(Constants.replies)
       .add({
+        'id': UniqueKey().toString(),
         'text': text,
         'createdAt': FieldValue.serverTimestamp(),
         'userId': FirebaseAuth.instance.currentUser!.uid,
@@ -239,6 +231,5 @@ Future<void> addReply(String articleId, String commentId, String text) async {
       .collection(Constants.articles)
       .doc(articleId)
       .collection(Constants.comments)
-      .doc(commentId)
-      .update({'repliesCount': FieldValue.increment(1)});
+      .doc(commentId);
 }

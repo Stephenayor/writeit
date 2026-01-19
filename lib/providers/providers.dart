@@ -104,8 +104,8 @@ final repliesProvider = StreamProvider.family<List<Reply>, ReplyArgs>((
   ref,
   args,
 ) {
-  final commentRepository = ref.watch(commentRepositoryProvider);
-  return commentRepository.watchReplies(args.articleId, args.commentId);
+  final repo = ref.watch(commentRepositoryProvider);
+  return repo.fetchReplies(args.articleId, args.commentId);
 });
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:writeit/core/utils/constants.dart';
-
 import '../../data/models/comment.dart';
 import '../../data/models/reply.dart';
 import '../../data/repositories/comment_repository.dart';
@@ -88,7 +87,7 @@ class CommentRepositoryImpl implements CommentRepository {
             .doc(articleId)
             .collection(Constants.comments)
             .doc(commentId),
-        {'repliesCount': FieldValue.increment(1)},
+        {},
       );
     });
   }
@@ -154,30 +153,41 @@ class CommentRepositoryImpl implements CommentRepository {
     });
   }
 
+  // @override
+  // Future<List<Comment>> getReplies(String articleId, String commentId) async {
+  //   final snap = await FirebaseFirestore.instance
+  //       .collection(Constants.articles)
+  //       .doc(articleId)
+  //       .collection(Constants.comments)
+  //       .doc(commentId)
+  //       .collection(Constants.replies)
+  //       .orderBy('createdAt')
+  //       .get();
+  //
+  //   return snap.docs.map((e) => Comment.fromDoc(e)).toList();
+  // }
+
   @override
-  Future<List<Comment>> getReplies(String articleId, String commentId) async {
-    final snap = await FirebaseFirestore.instance
+  Stream<List<Reply>> fetchReplies(String articleId, String commentId) {
+    final repliesRef = FirebaseFirestore.instance
         .collection(Constants.articles)
         .doc(articleId)
         .collection(Constants.comments)
         .doc(commentId)
         .collection(Constants.replies)
-        .orderBy('createdAt')
-        .get();
+        .orderBy('createdAt');
 
-    return snap.docs.map((e) => Comment.fromDoc(e)).toList();
-  }
+    return repliesRef.snapshots().asyncMap((snap) async {
+      final replies = snap.docs.map((e) => Reply.fromDoc(e)).toList();
 
-  @override
-  Stream<List<Reply>> watchReplies(String articleId, String commentId) {
-    return FirebaseFirestore.instance
-        .collection(Constants.articles)
-        .doc(articleId)
-        .collection(Constants.comments)
-        .doc(commentId)
-        .collection(Constants.replies)
-        .orderBy('createdAt')
-        .snapshots()
-        .map((snap) => snap.docs.map((e) => Reply.fromDoc(e)).toList());
+      await FirebaseFirestore.instance
+          .collection(Constants.articles)
+          .doc(articleId)
+          .collection(Constants.comments)
+          .doc(commentId)
+          .update({'repliesCount': replies.length});
+
+      return replies;
+    });
   }
 }
