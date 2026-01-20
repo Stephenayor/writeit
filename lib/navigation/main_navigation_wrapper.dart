@@ -6,8 +6,7 @@ import 'package:writeit/core/utils/routes.dart';
 class MainNavigationWrapper extends StatefulWidget {
   final Widget child;
 
-  const MainNavigationWrapper({Key? key, required this.child})
-    : super(key: key);
+  const MainNavigationWrapper({super.key, required this.child});
 
   @override
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
@@ -39,7 +38,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Determine current index based on route
+    // determine current index based on route
     final location = GoRouterState.of(context).uri.toString();
     if (location.contains('profile')) {
       _currentIndex = 3;
