@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:writeit/data/repositories/comment_repository.dart';
@@ -7,9 +8,11 @@ import 'package:writeit/domain/repo/DraftRepositoryImpl.dart';
 import '../../data/repositories/article_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/profile_repository.dart';
+import '../../data/repositories/search_repository.dart';
 import '../../domain/repo/ArticleRepositoryImpl.dart';
 import '../../domain/repo/AuthRepositoryImpl.dart';
 import '../../domain/repo/ProfileRepositoryImpl.dart';
+import '../../domain/repo/SearchRepositoryImpl.dart';
 import '../utils/user_session_helper.dart';
 
 final getIt = GetIt.instance;
@@ -24,4 +27,7 @@ void setupLocator() {
   );
   getIt.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl());
   getIt.registerLazySingleton<CommentRepository>(() => CommentRepositoryImpl());
+  getIt.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(FirebaseFirestore.instance),
+  );
 }

@@ -16,6 +16,7 @@ import '../data/repositories/article_repository.dart';
 import '../data/repositories/comment_repository.dart';
 import '../data/repositories/draft_repository.dart';
 import '../data/repositories/profile_repository.dart';
+import '../data/repositories/search_repository.dart';
 import '../domain/repo/AuthRepositoryImpl.dart';
 import '../domain/repo/CommentRepositoryImpl.dart';
 import '../presentation/auth/signin/signin_state.dart';
@@ -23,10 +24,11 @@ import '../presentation/auth/signin/signinviewmodel.dart';
 import '../presentation/auth/signup/signup_state.dart';
 import '../presentation/auth/signup/signup_viewmodel.dart';
 import '../presentation/comments/comments_viewmodel.dart';
-import '../presentation/comments/replies/replies_viewmodel.dart';
 import '../presentation/profile/profile_viewmodel.dart';
 import '../presentation/publish/create_article_viewmodel.dart';
 import '../presentation/publish/drafts/drafts_viewmodel.dart';
+import '../presentation/search/search_state.dart';
+import '../presentation/search/search_viewmodel.dart';
 
 final signupViewModelProvider =
     StateNotifierProvider<SignupViewModel, SignupState>((ref) {
@@ -126,3 +128,12 @@ final commentsStreamProvider = StreamProvider.family<List<Comment>, String>((
   final commentsRepository = ref.watch(commentRepositoryProvider);
   return commentsRepository.fetchComments(articleId);
 });
+
+final searchRepositoryProvider = Provider<SearchRepository>((ref) {
+  return getIt<SearchRepository>();
+});
+
+final searchViewModelProvider =
+    StateNotifierProvider<SearchViewModel, SearchState>((ref) {
+      return SearchViewModel(ref.watch(searchRepositoryProvider));
+    });
