@@ -13,11 +13,12 @@ class SearchViewModel extends StateNotifier<SearchState> {
   Timer? _debounce;
 
   void onQueryChanged(String value) {
+    final normalized = value.trim().toLowerCase();
     state = state.copyWith(query: value);
 
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
-      _search(value);
+      _search(normalized);
     });
   }
 

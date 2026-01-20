@@ -73,6 +73,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
       final article = Article(
         id: articleId,
         title: title,
+        titleLower: title.toLowerCase(),
         subtitle: null,
         content: contentWithUrls,
         coverImageUrl: coverImageUrl,

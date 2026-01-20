@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:writeit/core/utils/routes.dart';
+import '../../core/utils/view/article_card.dart';
 import '../../providers/providers.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(searchViewModelProvider);
     final vm = ref.read(searchViewModelProvider.notifier);
+    final searchState = ref.watch(searchViewModelProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text("Explore"), centerTitle: false),
@@ -95,18 +98,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: ListView.builder(
                     itemCount: state.results.length,
                     itemBuilder: (_, i) {
-                      final article = state.results[i];
-                      return ListTile(
-                        title: Text(article.title),
-                        subtitle: Text(
-                          article.content,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onTap: () {
-                          context.push(Routes.articlesDetailScreen);
-                        },
-                      );
+                      final articles = state.results[i];
+                      return ArticleCard(article: articles, isDark: isDark);
                     },
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Article {
   final String id;
   final String title;
+  final String titleLower;
   final String? subtitle;
   final String content;
   final String? coverImageUrl;
@@ -22,6 +23,7 @@ class Article {
   Article({
     required this.id,
     required this.title,
+    required this.titleLower,
     this.subtitle,
     required this.content,
     this.coverImageUrl,
@@ -43,6 +45,7 @@ class Article {
     return Article(
       id: documentId,
       title: json['title'] ?? '',
+      titleLower: json['titleLower'] ?? '',
       subtitle: json['subtitle'],
       content: json['content'] ?? '',
       coverImageUrl: json['coverImageUrl'],
@@ -64,6 +67,7 @@ class Article {
   Map<String, dynamic> toJson() {
     return {
       'title': title,
+      "titleLower": titleLower,
       'subtitle': subtitle,
       'content': content,
       'coverImageUrl': coverImageUrl,

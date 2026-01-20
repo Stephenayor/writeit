@@ -10,11 +10,12 @@ class SearchRepositoryImpl implements SearchRepository {
 
   @override
   Future<List<Article>> searchArticles(String query) async {
-    if (query.trim().isEmpty) return [];
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return [];
 
     final snap = await firestore
         .collection(Constants.articles)
-        .orderBy('title')
+        .orderBy('titleLower')
         .startAt([query])
         .endAt([query + '\uf8ff'])
         .limit(20)
