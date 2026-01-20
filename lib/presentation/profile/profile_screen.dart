@@ -472,7 +472,7 @@ class ProfileScreen extends ConsumerWidget {
               _ContactItem(
                 icon: Icons.email,
                 title: 'Email',
-                value: 'support@writeit.com',
+                value: 'akinwunmiayomide6@gmail.com',
                 isDark: isDark,
               ),
               _ContactItem(
@@ -484,7 +484,7 @@ class ProfileScreen extends ConsumerWidget {
               _ContactItem(
                 icon: Icons.location_on,
                 title: 'Address',
-                value: 'top Street, Lagos, Nigeria',
+                value: 'Ikeja, Lagos, Nigeria',
                 isDark: isDark,
               ),
               _ContactItem(
@@ -531,7 +531,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Last updated: December 2025',
+                    'Last updated: January 2026',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
