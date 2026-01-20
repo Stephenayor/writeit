@@ -24,7 +24,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Explore"), centerTitle: false),
+      appBar: AppBar(
+        title: const Text("Explore"),
+        centerTitle: false,
+        backgroundColor: Colors.blueGrey,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

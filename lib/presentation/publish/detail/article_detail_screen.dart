@@ -29,6 +29,7 @@ class ArticleDetailScreen extends ConsumerWidget {
       backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         centerTitle: false,
+        backgroundColor: Colors.blueGrey,
         title: Text(
           article.title,
           maxLines: 1,

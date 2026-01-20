@@ -24,10 +24,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
         context.go(Routes.home);
         break;
       case 1:
-        context.go(Routes.searchScreen); // You'll need to add this route
+        context.go(Routes.searchScreen);
         break;
       case 2:
-        // context.go(Routes.savedScreen); // You'll need to add this route
+        // context.go(Routes.savedScreen);
         break;
       case 3:
         context.go(Routes.profileScreen);
