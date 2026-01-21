@@ -2,9 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:writeit/core/utils/dialogs/error_dialog.dart';
 import 'package:writeit/presentation/publish/preview_card.dart';
-
 import '../../core/network/api_response.dart';
+import '../../core/utils/dialogs/show_loading.dart';
 import '../../core/utils/routes.dart';
 import '../../providers/providers.dart';
 
@@ -41,9 +42,19 @@ class PublishPreviewScreen extends ConsumerWidget {
 
         context.go(Routes.home);
       } else if (next is Failure<String>) {
-        ScaffoldMessenger.of(
+        ErrorDialog.show(context, "Error  ", next.message);
+      }
+
+      if (next is Loading<String>) {
+        AppLoadingDialog.show(
           context,
-        ).showSnackBar(SnackBar(content: Text(next.message)));
+          message: "Publishing your unique story..",
+        );
+      } else {
+        // Close loading dialog if it's open
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
       }
     });
 

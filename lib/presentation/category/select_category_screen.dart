@@ -97,7 +97,7 @@ class _SelectCategoryScreenState extends ConsumerState<SelectCategoryScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Text(
-              'Your categories',
+              '',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
