@@ -51,6 +51,7 @@ class PublishPreviewScreen extends ConsumerWidget {
       appBar: AppBar(
         centerTitle: false,
         title: const Text("Article Preview"),
+        backgroundColor: Colors.blueGrey,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -98,10 +99,32 @@ class PublishPreviewScreen extends ConsumerWidget {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: selectedCategory == null
-                    ? null
-                    : () => _publish(context, ref),
-                child: const Text("Publish now"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  if (selectedCategory == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Please select a category to complete the process",
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
+                  _publish(context, ref);
+                },
+                child: const Text(
+                  "Publish now",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),

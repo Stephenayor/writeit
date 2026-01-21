@@ -304,13 +304,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     final images = data['images'] as List<String>;
 
     final articleTitlePayLoad = _extractTitle();
-
-    // await publisher.publishArticle(
-    //   title: articleTitlePayLoad,
-    //   rawContent: content,
-    //   localImagePaths: images,
-    // );
-
     context.push(
       Routes.publishPreviewScreen,
       extra: {

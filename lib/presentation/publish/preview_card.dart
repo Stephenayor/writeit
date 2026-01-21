@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 class PreviewCard extends StatelessWidget {
   final String title;
-  final List<String> images;
+  final List<String>? images;
 
   const PreviewCard({super.key, required this.title, required this.images});
 
@@ -15,6 +15,7 @@ class PreviewCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = FirebaseAuth.instance.currentUser;
     final fallbackImage = "https://picsum.photos/300";
+    final hasImage = images != null && images!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -94,18 +95,16 @@ class PreviewCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        images.first ?? fallbackImage,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 80,
-                          height: 80,
-                          color: Colors.grey,
-                          child: const Icon(Icons.broken_image),
-                        ),
-                      ),
+                      child: hasImage
+                          ? Image.file(
+                              File(images!.first),
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _buildPlaceholder(isDark),
+                            )
+                          : _buildPlaceholder(isDark),
                     ),
                   ],
                 ),
@@ -113,6 +112,35 @@ class PreviewCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(bool isDark) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_outlined,
+            size: 28,
+            color: isDark ? Colors.white54 : Colors.black45,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "No image",
+            style: TextStyle(
+              fontSize: 10,
+              color: isDark ? Colors.white54 : Colors.black45,
+            ),
+          ),
+        ],
       ),
     );
   }

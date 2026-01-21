@@ -50,9 +50,9 @@ final router = GoRouter(
         final data = state.extra as Map<String, dynamic>?;
 
         return CreateArticleScreen(
-          // draftId: data?['draftId'],
-          // existingContent: data?['content'],
-          // existingImages: data?['images'],
+          draftId: data?['draftId'],
+          existingContent: data?['content'],
+          existingImages: data?['images'],
         );
       },
     ),
