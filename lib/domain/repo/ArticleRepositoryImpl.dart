@@ -201,6 +201,11 @@ class ArticleRepositoryImpl implements ArticleRepository {
         });
   }
 
+  @override
+  Future<void> deleteArticle(String articleId) async {
+    await _firestore.collection(Constants.articles).doc(articleId).delete();
+  }
+
   // @override
   // Future<String> publishArticle({
   //   required String title,

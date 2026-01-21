@@ -6,4 +6,5 @@ class Constants {
   static const String likes = "likes";
   static const String replies = "replies";
   static const String drafts = "articles";
+  static const String delete = "delete";
 }

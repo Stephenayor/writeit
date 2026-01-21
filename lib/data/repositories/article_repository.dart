@@ -12,4 +12,5 @@ abstract class ArticleRepository {
   Stream<List<Article>> fetchLatestArticles();
   Future<List<Article>> fetchArticlesByCategory(String category);
   Future<List<Article>> fetchArticlesByTag(String tag);
+  Future<void> deleteArticle(String articleId);
 }

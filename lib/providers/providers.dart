@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:writeit/core/di/locator.dart';
 import 'package:writeit/core/network/api_response.dart';
 import 'package:writeit/data/repositories/auth_repository.dart';
+import 'package:writeit/presentation/home/home_viewmodel.dart';
 import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
 import '../core/notifications/notifications_notifier.dart';
 import '../core/utils/user_session_helper.dart';
 import '../data/models/app_user.dart';
+import '../data/models/article.dart';
 import '../data/models/category.dart';
 import '../data/models/comment.dart';
 import '../data/models/reply.dart';
@@ -53,10 +55,18 @@ final articlePublishProvider =
       return CreateArticleViewModel(repo);
     });
 
-final homeViewModelProvider = StreamProvider.autoDispose((ref) {
-  final articleRepository = getIt<ArticleRepository>();
-  return articleRepository.fetchLatestArticles();
-});
+// final homeViewModelProvider = StreamProvider.autoDispose((ref) {
+//   final articleRepository = getIt<ArticleRepository>();
+//   return articleRepository.fetchLatestArticles();
+// });
+
+final homeViewModelProvider =
+    StateNotifierProvider.autoDispose<HomeViewmodel, AsyncValue<List<Article>>>(
+      (ref) {
+        final repo = getIt<ArticleRepository>();
+        return HomeViewmodel(repo);
+      },
+    );
 
 final profileStreamProvider = StreamProvider<AppUser?>((ref) {
   final profileRepository = getIt<ProfileRepository>();

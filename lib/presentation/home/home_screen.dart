@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:writeit/data/models/article.dart';
 import 'package:writeit/providers/providers.dart';
 
+import '../../core/utils/constants.dart';
 import '../../core/utils/routes.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -265,9 +266,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                   ),
-                  Icon(
-                    Icons.more_horiz,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_horiz,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    onSelected: (value) {
+                      if (value == Constants.delete) {
+                        confirmDelete(context, article, ref);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: Constants.delete,
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text("Delete article"),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -370,6 +390,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void confirmDelete(BuildContext context, Article article, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete article?"),
+        content: const Text("This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+
+              try {
+                await ref
+                    .read(homeViewModelProvider.notifier)
+                    .deleteArticle(article.id);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Article deleted")),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Failed: $e")));
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

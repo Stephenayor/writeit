@@ -119,7 +119,7 @@ class PublishPreviewScreen extends ConsumerWidget {
                     return;
                   }
 
-                  _publish(context, ref);
+                  publish(context, ref);
                 },
                 child: const Text(
                   "Publish now",
@@ -133,7 +133,7 @@ class PublishPreviewScreen extends ConsumerWidget {
     );
   }
 
-  void _publish(BuildContext context, WidgetRef ref) async {
+  void publish(BuildContext context, WidgetRef ref) async {
     final publisher = ref.read(articlePublishProvider.notifier);
     final category = ref.read(selectedCategoryProvider)!;
 
