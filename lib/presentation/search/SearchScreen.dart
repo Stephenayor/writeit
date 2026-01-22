@@ -18,9 +18,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(searchViewModelProvider);
-    final vm = ref.read(searchViewModelProvider.notifier);
     final searchState = ref.watch(searchViewModelProvider);
+    final searchViewModel = ref.read(searchViewModelProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -37,7 +36,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             // 🔍 Search Field
             TextField(
               controller: controller,
-              onChanged: vm.onQueryChanged,
+              onChanged: searchViewModel.onQueryChanged,
               decoration: InputDecoration(
                 hintText: "Search for articles",
                 prefixIcon: const Icon(Icons.search),
@@ -46,7 +45,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         icon: const Icon(Icons.close),
                         onPressed: () {
                           controller.clear();
-                          vm.onQueryChanged("");
+                          searchViewModel.onQueryChanged("");
                         },
                       )
                     : null,
@@ -61,7 +60,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const SizedBox(height: 16),
 
             // 🕘 Recent Searches
-            if (state.query.isEmpty && state.recent.isNotEmpty) ...[
+            if (searchState.query.isEmpty && searchState.recent.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -70,7 +69,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextButton(
-                    onPressed: vm.clearRecent,
+                    onPressed: searchViewModel.clearRecent,
                     child: const Text("Clear all"),
                   ),
                 ],
@@ -78,13 +77,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: state.recent
+                children: searchState.recent
                     .map(
                       (r) => ActionChip(
                         label: Text(r),
                         onPressed: () {
                           controller.text = r;
-                          vm.tapRecent(r);
+                          searchViewModel.tapRecent(r);
                         },
                       ),
                     )
@@ -93,16 +92,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ],
 
             // 📃 Results
-            if (state.query.isNotEmpty) ...[
+            if (searchState.query.isNotEmpty) ...[
               const SizedBox(height: 12),
-              if (state.isLoading)
+              if (searchState.isLoading)
                 const Center(child: CircularProgressIndicator())
               else
                 Expanded(
                   child: ListView.builder(
-                    itemCount: state.results.length,
+                    itemCount: searchState.results.length,
                     itemBuilder: (_, i) {
-                      final articles = state.results[i];
+                      final articles = searchState.results[i];
                       return ArticleCard(article: articles, isDark: isDark);
                     },
                   ),

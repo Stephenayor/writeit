@@ -9,7 +9,7 @@ import '../../core/utils/constants.dart';
 import '../../core/utils/routes.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -92,7 +92,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        context.push(Routes.searchScreen);
+                      },
                       icon: Icon(
                         Icons.search,
                         color: isDark ? Colors.white : Colors.black87,
@@ -115,7 +117,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Stack(
                       children: [
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            context.push(Routes.notificationsScreen);
+                          },
                           icon: Icon(
                             Icons.notifications_outlined,
                             color: isDark ? Colors.white : Colors.black87,

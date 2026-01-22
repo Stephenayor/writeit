@@ -36,6 +36,12 @@ class _CommentTileState extends ConsumerState<CommentTile> {
 
     final currentUser = ref.watch(userSessionProvider);
     final avatarUrl = widget.comment.avatarUrl;
+    String replyCountText;
+    if (widget.comment.repliesCount > 1) {
+      replyCountText = "replies";
+    } else {
+      replyCountText = "reply";
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +105,7 @@ class _CommentTileState extends ConsumerState<CommentTile> {
           child: Row(
             children: [
               TextButton(
-                child: Text("${widget.comment.repliesCount} replies"),
+                child: Text("${widget.comment.repliesCount} $replyCountText"),
                 onPressed: () {
                   setState(() => expanded = !expanded);
                 },
@@ -227,7 +233,7 @@ Future<void> addReply(String articleId, String commentId, String text) async {
       });
 
   // Also increment repliesCount on parent comment
-  await FirebaseFirestore.instance
+  FirebaseFirestore.instance
       .collection(Constants.articles)
       .doc(articleId)
       .collection(Constants.comments)

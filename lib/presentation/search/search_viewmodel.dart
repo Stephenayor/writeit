@@ -6,9 +6,9 @@ import 'package:writeit/presentation/search/search_state.dart';
 import '../../data/repositories/search_repository.dart';
 
 class SearchViewModel extends StateNotifier<SearchState> {
-  final SearchRepository repo;
+  final SearchRepository searchRepository;
 
-  SearchViewModel(this.repo) : super(SearchState.initial());
+  SearchViewModel(this.searchRepository) : super(SearchState.initial());
 
   Timer? _debounce;
 
@@ -18,11 +18,11 @@ class SearchViewModel extends StateNotifier<SearchState> {
 
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
-      _search(normalized);
+      search(normalized);
     });
   }
 
-  Future<void> _search(String query) async {
+  Future<void> search(String query) async {
     if (query.trim().isEmpty) {
       state = state.copyWith(results: []);
       return;
@@ -30,7 +30,7 @@ class SearchViewModel extends StateNotifier<SearchState> {
 
     state = state.copyWith(isLoading: true);
 
-    final results = await repo.searchArticles(query);
+    final results = await searchRepository.searchArticles(query);
 
     state = state.copyWith(
       isLoading: false,

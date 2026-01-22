@@ -26,6 +26,7 @@ class ArticleDetailScreen extends ConsumerWidget {
     final commentsRepository = ref.read(commentRepositoryProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         centerTitle: false,

@@ -10,6 +10,7 @@ import 'package:writeit/presentation/publish/drafts/drafts_list_screen.dart';
 import '../core/utils/routes.dart';
 import '../data/models/article.dart';
 import '../presentation/category/select_category_screen.dart';
+import '../presentation/notifications/notifications_screen.dart';
 import '../presentation/publish/detail/article_detail_screen.dart';
 import '../presentation/publish/publish_preview_screen.dart';
 import '../presentation/search/SearchScreen.dart';
@@ -99,6 +100,10 @@ final router = GoRouter(
     GoRoute(
       path: Routes.selectCategoryScreen,
       builder: (_, __) => SelectCategoryScreen(),
+    ),
+    GoRoute(
+      path: Routes.notificationsScreen,
+      builder: (_, __) => NotificationScreen(),
     ),
 
     // Shell route for screens with bottom navigation

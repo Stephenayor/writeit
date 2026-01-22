@@ -319,40 +319,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     context.push(Routes.draftsListScreen);
   }
 
-  // Map<String, dynamic> _serializeForStorage() {
-  //   final buffer = StringBuffer();
-  //   final images = <String>[];
-  //
-  //   for (final b in _blocks) {
-  //     switch (b.type) {
-  //       case BlockType.heading:
-  //         buffer.writeln('# ${b.controller.text}\n');
-  //         break;
-  //
-  //       case BlockType.quote:
-  //         buffer.writeln('> ${b.controller.text}\n');
-  //         break;
-  //
-  //       case BlockType.image:
-  //         final index = images.length;
-  //         images.add(b.image!.path);
-  //         buffer.writeln('[IMAGE:$index]\n');
-  //         break;
-  //
-  //       default:
-  //         if (b.isBullet) {
-  //           buffer.writeln('- ${b.controller.text}\n');
-  //         } else if (b.isNumbered) {
-  //           buffer.writeln('1. ${b.controller.text}\n');
-  //         } else {
-  //           buffer.writeln('${b.controller.text}\n');
-  //         }
-  //     }
-  //   }
-  //
-  //   return {'content': buffer.toString(), 'images': images};
-  // }
-
   Map<String, dynamic> _serializeForStorage() {
     final buffer = StringBuffer();
     final images = <String>[];
@@ -501,8 +467,8 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-
-      //APP BAR
+      resizeToAvoidBottomInset: true,
+      //App Bar
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
         child: SafeArea(
@@ -582,72 +548,22 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
         },
       ),
 
-      // TOOLBAR
-      bottomNavigationBar: EditorToolbar(
-        onHeading: _toHeading,
-        onQuote: _toQuote,
-        onBold: _toggleBold,
-        onItalic: () {
-          _toggleItalic();
-        },
-        onImage: _addImage,
-        onBullet: _toggleBullet,
-        onNumbered: _toggleNumbered,
-      ),
-    );
-  }
-
-  Widget _buildBlock1(EditorBlock editorBlock, int i) {
-    if (editorBlock.type == BlockType.image) {
-      return Padding(
-        padding: EdgeInsets.only(
-          left: editorBlock.controller.text.startsWith("• ") ? 16 : 0,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: EditorToolbar(
+            onHeading: _toHeading,
+            onQuote: _toQuote,
+            onBold: _toggleBold,
+            onItalic: _toggleItalic,
+            onImage: _addImage,
+            onBullet: _toggleBullet,
+            onNumbered: _toggleNumbered,
+          ),
         ),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.file(editorBlock.image!),
-            ),
-            Positioned(
-              top: 6,
-              right: 6,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    final file = editorBlock.image!;
-                    ImagePersistenceHelper.deleteImage(file.path);
-                    _blocks.removeAt(i);
-
-                    if (_blocks.isEmpty) {
-                      _blocks.add(EditorBlock.paragraph());
-                    }
-
-                    _activeIndex = (_activeIndex - 1).clamp(
-                      0,
-                      _blocks.length - 1,
-                    );
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return TextField(
-      controller: editorBlock.controller,
-      readOnly: editorBlock.readOnly,
-      maxLines: null,
-      style: _style(editorBlock),
-      decoration: const InputDecoration(
-        hintText: 'Tell your story...',
-        border: InputBorder.none,
       ),
-      onTap: () => _setActive(i),
-      onChanged: (_) => _autoSaveDraft(),
     );
   }
 

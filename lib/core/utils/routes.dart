@@ -13,4 +13,5 @@ class Routes {
   static const String publishPreviewScreen = '/publish-preview-screen';
   static const String selectCategoryScreen = '/select-category-screen';
   static const String savedScreen = '/saved-screen';
+  static const String notificationsScreen = '/notifications-screen';
 }
