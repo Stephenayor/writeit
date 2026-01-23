@@ -32,7 +32,7 @@ class SigninScreen extends ConsumerWidget {
         ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
       }
 
-      if (next.isSuccess && !(prev?.isSuccess ?? false)) {
+      if (next.isSuccess) {
         Future.microtask(() {
           context.go(Routes.home);
         });

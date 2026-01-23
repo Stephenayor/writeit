@@ -14,7 +14,7 @@ class SignupScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(signupViewModelProvider);
-    final viewModel = ref.read(signupViewModelProvider.notifier);
+    final signUpViewModel = ref.read(signupViewModelProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     ref.listen<SignupState>(signupViewModelProvider, (prev, next) {
@@ -33,14 +33,12 @@ class SignupScreen extends ConsumerWidget {
         ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
       }
 
-      if (!viewModel.isNotInputValidation) {
+      if (!signUpViewModel.isNotInputValidation) {
         ErrorDialog.show(context, "Sign up Failed", next.errorMessage!);
       }
 
-      if (next.isSuccess && !(prev?.isSuccess ?? false)) {
-        Future.microtask(() {
-          context.go(Routes.home);
-        });
+      if (next.isSuccess) {
+        context.go(Routes.home);
       }
     });
 
@@ -137,7 +135,7 @@ class SignupScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     TextField(
-                      onChanged: viewModel.updateName,
+                      onChanged: signUpViewModel.updateName,
                       decoration: InputDecoration(
                         hintText: 'Enter name here',
                         hintStyle: TextStyle(
@@ -186,7 +184,7 @@ class SignupScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     TextField(
-                      onChanged: viewModel.updateEmail,
+                      onChanged: signUpViewModel.updateEmail,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: 'Enter your mail',
@@ -236,7 +234,7 @@ class SignupScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     TextField(
-                      onChanged: viewModel.updatePassword,
+                      onChanged: signUpViewModel.updatePassword,
                       obscureText: !state.isPasswordVisible,
                       decoration: InputDecoration(
                         hintText: 'Enter a strong password',
@@ -274,7 +272,7 @@ class SignupScreen extends ConsumerWidget {
                                 : Icons.visibility_outlined,
                             color: Colors.grey[600],
                           ),
-                          onPressed: viewModel.togglePasswordVisibility,
+                          onPressed: signUpViewModel.togglePasswordVisibility,
                         ),
                       ),
                       style: TextStyle(
@@ -292,7 +290,7 @@ class SignupScreen extends ConsumerWidget {
                         onPressed: state.isLoading
                             ? null
                             : () async {
-                                final success = await viewModel
+                                final success = await signUpViewModel
                                     .signUpWithEmail();
                                 if (success && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -380,7 +378,7 @@ class SignupScreen extends ConsumerWidget {
                         InkWell(
                           onTap: state.isLoading
                               ? null
-                              : viewModel.signInWithGoogle,
+                              : signUpViewModel.signInWithGoogle,
                           child: Container(
                             width: 56,
                             height: 56,
@@ -411,7 +409,7 @@ class SignupScreen extends ConsumerWidget {
                         InkWell(
                           onTap: state.isLoading
                               ? null
-                              : viewModel.signInWithApple,
+                              : signUpViewModel.signInWithApple,
                           child: Container(
                             width: 56,
                             height: 56,

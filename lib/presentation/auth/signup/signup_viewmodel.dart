@@ -111,13 +111,3 @@ class SignupViewModel extends StateNotifier<SignupState> {
 
   User? get currentUser => FirebaseAuth.instance.currentUser;
 }
-
-// Provider
-// final authRepositoryProvider = Provider<AuthRepository>((ref) {
-//   return AuthRepositoryImpl();
-// });
-
-// final signupViewModelProvider =
-//     StateNotifierProvider<SignupViewModel, SignupState>((ref) {
-//       return SignupViewModel(ref.read(authRepositoryProvider));
-//     });

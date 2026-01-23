@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:writeit/core/utils/dialogs/app_comingsoon_sheet.dart';
+import 'package:writeit/core/utils/dialogs/comingsoon_dialog.dart';
 import 'package:writeit/core/utils/routes.dart';
 
 // Main wrapper widget that contains the bottom navigation
@@ -26,7 +28,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
         context.go(Routes.searchScreen);
         break;
       case 2:
-        // context.go(Routes.savedScreen);
+        AppComingSoonSheet.show(context);
         break;
       case 3:
         context.go(Routes.profileScreen);
@@ -37,8 +39,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // determine current index based on route
+    // Determine current index based on route
     final location = GoRouterState.of(context).uri.toString();
     if (location.contains('profile')) {
       _currentIndex = 3;
