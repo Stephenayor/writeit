@@ -370,7 +370,7 @@ class SigninScreen extends ConsumerWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Apple sign in coming soon',
+                                        'Apple Sign In Coming Soon\nPlease Update your app Regularly to get access to latest features.',
                                       ),
                                     ),
                                   );

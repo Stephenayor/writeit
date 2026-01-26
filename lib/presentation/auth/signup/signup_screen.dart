@@ -407,9 +407,14 @@ class SignupScreen extends ConsumerWidget {
 
                         // Apple Button
                         InkWell(
-                          onTap: state.isLoading
-                              ? null
-                              : signUpViewModel.signInWithApple,
+                          onTap: () => {
+                            Text(
+                              'Apple Sign In Coming Soon\nPlease Update your app Regularly to get access to latest features.',
+                            ),
+                          },
+                          // onTap: state.isLoading
+                          //     ? null
+                          //     : signUpViewModel.signInWithApple,
                           child: Container(
                             width: 56,
                             height: 56,
