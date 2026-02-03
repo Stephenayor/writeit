@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -7,6 +8,7 @@ import 'package:writeit/data/repositories/auth_repository.dart';
 import 'package:writeit/presentation/home/home_viewmodel.dart';
 import 'package:writeit/presentation/publish/drafts/draft_save_state.dart';
 import '../core/notifications/notifications_notifier.dart';
+import '../core/utils/constants.dart';
 import '../core/utils/user_session_helper.dart';
 import '../data/models/app_user.dart';
 import '../data/models/article.dart';
@@ -147,3 +149,19 @@ final searchViewModelProvider =
     StateNotifierProvider<SearchViewModel, SearchState>((ref) {
       return SearchViewModel(ref.watch(searchRepositoryProvider));
     });
+
+final articleByIdProvider = FutureProvider.family<Article, String>((
+  ref,
+  id,
+) async {
+  final doc = await FirebaseFirestore.instance
+      .collection(Constants.articles)
+      .doc(id)
+      .get();
+
+  if (!doc.exists) {
+    throw Exception("Article not found");
+  }
+
+  return Article.fromJson(doc.data()!, doc.id);
+});

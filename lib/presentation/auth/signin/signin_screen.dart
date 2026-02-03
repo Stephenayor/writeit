@@ -8,13 +8,23 @@ import '../../../core/utils/routes.dart';
 import '../../../providers/providers.dart';
 
 class SigninScreen extends ConsumerWidget {
-  const SigninScreen({Key? key}) : super(key: key);
+  final Object? extra;
+  const SigninScreen({Key? key, this.extra}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(signInViewModelProvider);
     final viewModel = ref.read(signInViewModelProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final redirect = (extra as Map?)?["redirectTo"] as String?;
+
+    void onLoginSuccess() {
+      if (redirect != null) {
+        context.go(redirect);
+      } else {
+        context.go(Routes.home);
+      }
+    }
 
     ref.listen<SigninState>(signInViewModelProvider, (prev, next) {
       if (next.isLoading && !(prev?.isLoading ?? false)) {
@@ -33,9 +43,10 @@ class SigninScreen extends ConsumerWidget {
       }
 
       if (next.isSuccess) {
-        Future.microtask(() {
-          context.go(Routes.home);
-        });
+        onLoginSuccess();
+        // Future.microtask(() {
+        //   context.go(Routes.home);
+        // });
       }
     });
 

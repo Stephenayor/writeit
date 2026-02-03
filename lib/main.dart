@@ -6,8 +6,8 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:writeit/core/di/locator.dart';
 import 'package:writeit/core/theme/app_theme.dart';
 import 'package:writeit/firebase_options.dart';
-import 'package:writeit/splash_screen.dart';
-
+import 'package:writeit/presentation/deeplink/deep_link_service.dart';
+import 'main.dart' as _deepLinks;
 import 'navigation/approuter.dart';
 
 void main() async {
@@ -19,8 +19,28 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final DeepLinkService _deepLinks;
+
+  @override
+  void initState() {
+    super.initState();
+    _deepLinks = DeepLinkService(router);
+    _deepLinks.init();
+  }
+
+  @override
+  void dispose() {
+    _deepLinks.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

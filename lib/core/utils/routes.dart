@@ -14,4 +14,7 @@ class Routes {
   static const String selectCategoryScreen = '/select-category-screen';
   static const String savedScreen = '/saved-screen';
   static const String notificationsScreen = '/notifications-screen';
+  static const String createArticleScreenV2 = '/create-article-screen-v2';
+  static const String articleDeepLink = '/article/:id';
+  static const String articleById = '/article/:id/read';
 }

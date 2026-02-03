@@ -4,12 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/constants.dart';
 import '../../../data/models/article.dart';
 import '../../../providers/providers.dart';
 import '../../comments/article_comment_composer.dart';
 import '../../comments/comments_sheet.dart';
+import 'article_pdf_service.dart';
 
 class ArticleDetailScreen extends ConsumerWidget {
   final Article article;
@@ -107,6 +109,16 @@ class ArticleDetailScreen extends ConsumerWidget {
                 ],
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () async {
+              final file = await ArticlePdfService.generatePdf(article);
+
+              await Share.shareXFiles([
+                XFile(file.path),
+              ], subject: article.title);
+            },
           ),
         ],
       ),

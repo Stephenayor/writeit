@@ -2,7 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 
-enum BlockType { paragraph, heading, quote, image }
+enum BlockType {
+  paragraph,
+  heading,
+  quote,
+  image,
+  bulletListItem,
+  numberedListItem,
+}
 
 class EditorBlock {
   BlockType type;

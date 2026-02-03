@@ -63,5 +63,14 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
     <string>We need access to your photo library to add images to your article</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>writeit</string>
+        </array>
+      </dict>
+    </array>
 </dict>
 </plist>

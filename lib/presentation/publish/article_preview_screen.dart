@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../core/utils/helper/image_persistence_helper.dart';
 
 class ArticlePreviewScreen extends StatelessWidget {
   final String content;
@@ -13,10 +14,13 @@ class ArticlePreviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
       appBar: AppBar(
         title: const Text('Preview'),
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.blueGrey,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -26,13 +30,13 @@ class ArticlePreviewScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _buildContent(),
+          children: _buildContent(isDark),
         ),
       ),
     );
   }
 
-  List<Widget> _buildContent() {
+  List<Widget> _buildContent(bool isDark) {
     final lines = content.split('\n');
     final widgets = <Widget>[];
 
@@ -49,7 +53,11 @@ class ArticlePreviewScreen extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 16, top: 8),
             child: Text(
               line.substring(2),
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
             ),
           ),
         );
@@ -62,16 +70,19 @@ class ArticlePreviewScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               border: Border(
-                left: BorderSide(color: Colors.grey.shade400, width: 4),
+                left: BorderSide(
+                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade400,
+                  width: 4,
+                ),
               ),
-              color: Colors.grey.shade50,
+              color: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
             ),
             child: Text(
               line.substring(2),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
-                color: Colors.grey,
+                color: isDark ? Colors.grey[400] : Colors.grey,
               ),
             ),
           ),
@@ -86,9 +97,79 @@ class ArticlePreviewScreen extends StatelessWidget {
             widgets.add(
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(File(images[index]), fit: BoxFit.cover),
+                child: FutureBuilder<File?>(
+                  future: ImagePersistenceHelper.getImageFile(images[index]),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    if (snapshot.hasError || snapshot.data == null) {
+                      return Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.red, width: 2),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image,
+                                size: 48,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Image not found',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        snapshot.data!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.error,
+                                size: 48,
+                                color: Colors.red,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
             );
@@ -103,8 +184,16 @@ class ArticlePreviewScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('• ', style: TextStyle(fontSize: 18)),
-                Expanded(child: _parseInlineMarkdown(line.substring(2))),
+                Text(
+                  '• ',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                Expanded(
+                  child: _parseInlineMarkdown(line.substring(2), isDark),
+                ),
               ],
             ),
           ),
@@ -121,20 +210,21 @@ class ArticlePreviewScreen extends StatelessWidget {
               children: [
                 Text(
                   '${line.split('.')[0]}. ',
-                  style: const TextStyle(fontSize: 18),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
                 ),
-                Expanded(child: _parseInlineMarkdown(text)),
+                Expanded(child: _parseInlineMarkdown(text, isDark)),
               ],
             ),
           ),
         );
-      }
-      // Regular paragraph
-      else {
+      } else {
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _parseInlineMarkdown(line),
+            child: _parseInlineMarkdown(line, isDark),
           ),
         );
       }
@@ -143,8 +233,7 @@ class ArticlePreviewScreen extends StatelessWidget {
     return widgets;
   }
 
-  // 1. Fix the italic markdown parsing in preview
-  Widget _parseInlineMarkdown(String text) {
+  Widget _parseInlineMarkdown(String text, bool isDark) {
     final spans = <InlineSpan>[];
     final regex = RegExp(r'\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_|`(.+?)`');
     int lastIndex = 0;
@@ -155,7 +244,6 @@ class ArticlePreviewScreen extends StatelessWidget {
         spans.add(TextSpan(text: text.substring(lastIndex, match.start)));
       }
 
-      // Bold (**text**)
       if (match.group(1) != null) {
         spans.add(
           TextSpan(
@@ -163,33 +251,29 @@ class ArticlePreviewScreen extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         );
-      }
-      // Italic (*text*) - single asterisk
-      else if (match.group(2) != null) {
+      } else if (match.group(2) != null) {
         spans.add(
           TextSpan(
             text: match.group(2),
             style: const TextStyle(fontStyle: FontStyle.italic),
           ),
         );
-      }
-      // Italic underscore
-      else if (match.group(3) != null) {
+      } else if (match.group(3) != null) {
         spans.add(
           TextSpan(
             text: match.group(3),
             style: const TextStyle(fontStyle: FontStyle.italic),
           ),
         );
-      }
-      // Code (inline)
-      else if (match.group(4) != null) {
+      } else if (match.group(4) != null) {
         spans.add(
           TextSpan(
             text: match.group(4),
             style: TextStyle(
               fontFamily: 'monospace',
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: isDark
+                  ? Colors.grey.shade800
+                  : Colors.grey.shade200,
             ),
           ),
         );
@@ -204,7 +288,11 @@ class ArticlePreviewScreen extends StatelessWidget {
 
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 18, height: 1.6, color: Colors.black),
+        style: TextStyle(
+          fontSize: 18,
+          height: 1.6,
+          color: isDark ? Colors.white : Colors.black,
+        ),
         children: spans.isEmpty ? [TextSpan(text: text)] : spans,
       ),
     );

@@ -66,6 +66,7 @@ class Article {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       "titleLower": titleLower,
       'subtitle': subtitle,

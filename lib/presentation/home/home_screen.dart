@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:writeit/data/models/article.dart';
 import 'package:writeit/providers/providers.dart';
 
@@ -275,12 +277,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Icons.more_horiz,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       if (value == Constants.delete) {
                         confirmDelete(context, article, ref);
                       }
+                      if (value == Constants.share) {
+                        shareArticle(article);
+                      }
+                      if (value == Constants.copyLink) {
+                        final link =
+                            "https://writeit.app/article/${article.id}";
+                        await Clipboard.setData(ClipboardData(text: link));
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Link copied")),
+                          );
+                        }
+                      }
                     },
                     itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: Constants.share,
+                        child: Row(
+                          children: [
+                            Icon(Icons.link),
+                            SizedBox(width: 8),
+                            Text("Share article"),
+                          ],
+                        ),
+                      ),
                       const PopupMenuItem(
                         value: Constants.delete,
                         child: Row(
@@ -289,6 +315,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             SizedBox(width: 8),
                             Text("Delete article"),
                           ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: Constants.copyLink,
+                        child: Opacity(
+                          opacity: 0,
+                          child: Row(
+                            children: [
+                              Icon(Icons.link),
+                              SizedBox(width: 8),
+                              Text("Copy link"),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -432,5 +471,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
     );
+  }
+
+  void shareArticle(Article article) {
+    final link = "writeit://article/${article.id}";
+    Share.share(link, subject: article.title);
   }
 }

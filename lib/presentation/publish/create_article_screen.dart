@@ -32,7 +32,6 @@ class CreateArticleScreen extends ConsumerStatefulWidget {
 class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
   final List<EditorBlock> _blocks = [EditorBlock.paragraph()];
   int _activeIndex = 0;
-  late final String _draftId;
   String? _currentDraftId;
   bool _didLoadInitialContent = false;
 
@@ -52,45 +51,65 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     });
   }
 
-  void _loadFromDraft() {
+  Future<void> _loadFromDraft() async {
     _blocks.clear();
 
     final lines = widget.existingContent!.split('\n');
 
-    for (final line in lines) {
+    for (final rawLine in lines) {
+      final line = rawLine.trimRight();
+
+      // Skip empty lines
       if (line.trim().isEmpty) continue;
 
+      // Check for heading
       if (line.startsWith('# ')) {
         _blocks.add(EditorBlock.heading()..controller.text = line.substring(2));
-      } else if (line.startsWith('> ')) {
-        _blocks.add(EditorBlock.quote()..controller.text = line.substring(2));
-      } else if (line.startsWith('[IMAGE:')) {
-        final index = int.parse(
-          RegExp(r'\[IMAGE:(\d+)\]').firstMatch(line)!.group(1)!,
-        );
-
-        if (widget.existingImages != null &&
-            index < widget.existingImages!.length) {
-          final path = widget.existingImages![index];
-          _blocks.add(EditorBlock.image(File(path)));
-        }
-      } else {
-        _blocks.add(EditorBlock.paragraph()..controller.text = line);
       }
+      // Check for quote
+      else if (line.startsWith('> ')) {
+        _blocks.add(EditorBlock.quote()..controller.text = line.substring(2));
+      }
+      // Check for image marker
+      else if (line.startsWith('[IMAGE:')) {
+        final match = RegExp(r'\[IMAGE:(\d+)\]').firstMatch(line);
+        if (match != null) {
+          final index = int.parse(match.group(1)!);
 
-      if (line.startsWith('- ')) {
+          if (widget.existingImages != null &&
+              index < widget.existingImages!.length) {
+            final filename = widget.existingImages![index];
+
+            // Get the full path from filename
+            final file = await ImagePersistenceHelper.getImageFile(filename);
+
+            if (file != null && await file.exists()) {
+              _blocks.add(EditorBlock.image(file));
+            }
+          }
+        }
+      }
+      // Check for bullet list
+      else if (line.startsWith('- ')) {
         final block = EditorBlock.paragraph();
         block.isBullet = true;
         block.controller.text = line.substring(2);
         _blocks.add(block);
-      } else if (RegExp(r'^\d+\. ').hasMatch(line)) {
+      }
+      // Check for numbered list
+      else if (RegExp(r'^\d+\. ').hasMatch(line)) {
         final block = EditorBlock.paragraph();
         block.isNumbered = true;
         block.controller.text = line.replaceFirst(RegExp(r'^\d+\. '), '');
         _blocks.add(block);
       }
+      // Regular paragraph
+      else {
+        _blocks.add(EditorBlock.paragraph()..controller.text = line);
+      }
     }
 
+    // Ensure at least one block exists
     if (_blocks.isEmpty) {
       _blocks.add(EditorBlock.paragraph());
     }
@@ -98,7 +117,7 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     setState(() {});
   }
 
-  void _setActive(int i) => _activeIndex = i;
+  void _setActive(int i) => setState(() => _activeIndex = i);
 
   void _toHeading() {
     final block = _blocks[_activeIndex];
@@ -147,7 +166,8 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     final filename = await ImagePersistenceHelper.persistImage(img.path);
     if (filename.isEmpty) return;
 
-    final file = File(await ImagePersistenceHelper.getFullPath(filename));
+    final file = await ImagePersistenceHelper.getImageFile(filename);
+    if (file == null) return;
 
     setState(() {
       _blocks.insert(_activeIndex + 1, EditorBlock.image(file));
@@ -297,13 +317,9 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
   }
 
   Future<void> _publish() async {
-    final publisher = ref.read(articlePublishProvider.notifier);
-
     final data = _serializeForStorage();
-    final content = data['content'] as String;
-    final images = data['images'] as List<String>;
-
     final articleTitlePayLoad = _extractTitle();
+
     context.push(
       Routes.publishPreviewScreen,
       extra: {
@@ -326,40 +342,38 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     for (final b in _blocks) {
       switch (b.type) {
         case BlockType.heading:
-          buffer.writeln('# ${b.controller.text}\n');
+          buffer.writeln('# ${b.controller.text}');
           break;
 
         case BlockType.quote:
-          buffer.writeln('> ${b.controller.text}\n');
+          buffer.writeln('> ${b.controller.text}');
           break;
 
         case BlockType.image:
           final index = images.length;
-          images.add(b.image!.path);
-          buffer.writeln('[IMAGE:$index]\n');
+          // Store only the filename, not the full path
+          final filename = b.image!.path.split('/').last;
+          images.add(filename);
+          buffer.writeln('[IMAGE:$index]');
           break;
 
         default:
           if (b.isBullet) {
-            // Split by newlines and add bullet to each line
             final lines = b.controller.text.split('\n');
             for (final line in lines) {
               if (line.trim().isNotEmpty) {
                 buffer.writeln('- $line');
               }
             }
-            buffer.writeln();
           } else if (b.isNumbered) {
-            // Split by newlines and add numbers to each line
             final lines = b.controller.text.split('\n');
             for (int i = 0; i < lines.length; i++) {
               if (lines[i].trim().isNotEmpty) {
                 buffer.writeln('${i + 1}. ${lines[i]}');
               }
             }
-            buffer.writeln();
           } else {
-            buffer.writeln('${b.controller.text}\n');
+            buffer.writeln(b.controller.text);
           }
       }
     }
@@ -386,7 +400,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
     final text = c.text;
     final selected = text.substring(sel.start, sel.end);
-
     final before = text.substring(0, sel.start);
     final after = text.substring(sel.end);
 
@@ -394,7 +407,7 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
     c.text = newText;
     c.selection = TextSelection.collapsed(
-      offset: ("$before**$selected**").length,
+      offset: sel.start + selected.length + 4,
     );
 
     setState(() {});
@@ -409,11 +422,9 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
     final text = c.text;
     final selected = text.substring(sel.start, sel.end);
-
     final before = text.substring(0, sel.start);
     final after = text.substring(sel.end);
 
-    // Use single asterisk for italic
     final newText = "$before*$selected*$after";
 
     c.text = newText;
@@ -426,8 +437,8 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
   void _toggleBullet() {
     final block = _blocks[_activeIndex];
-
     if (block.type != BlockType.paragraph) return;
+
     setState(() {
       block.isBullet = !block.isBullet;
       if (block.isBullet) block.isNumbered = false;
@@ -436,7 +447,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
   void _toggleNumbered() {
     final block = _blocks[_activeIndex];
-
     if (block.type != BlockType.paragraph) return;
 
     setState(() {
@@ -447,6 +457,8 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     ref.listen<ApiResponse<String>>(articlePublishProvider, (prev, next) {
       if (next is Success<String>) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -466,9 +478,8 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
       resizeToAvoidBottomInset: true,
-      //App Bar
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
         child: SafeArea(
@@ -481,18 +492,23 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
                     _autoSaveDraft();
                     context.pop();
                   },
-                  child: const Text('Close', style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
                 ),
-
                 const Spacer(),
-
                 IconButton(
-                  icon: const Icon(Icons.more_horiz),
+                  icon: Icon(
+                    Icons.more_horiz,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                   onPressed: _showMoreSheet,
                 ),
-
                 const SizedBox(width: 8),
-
                 Consumer(
                   builder: (_, ref, __) {
                     final publishState = ref.watch(articlePublishProvider);
@@ -522,16 +538,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
           ),
         ),
       ),
-
-      // body: ListView.builder(
-      //   padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
-      //   itemCount: _blocks.length,
-      //   itemBuilder: (_, i) {
-      //     final b = _blocks[i];
-      //
-      //     return KeyedSubtree(key: ValueKey(b.id), child: _buildBlock(b, i));
-      //   },
-      // ),
       body: ReorderableListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
         itemCount: _blocks.length,
@@ -547,7 +553,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
           return KeyedSubtree(key: ValueKey(b.id), child: _buildBlock(b, i));
         },
       ),
-
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: EdgeInsets.only(
@@ -568,6 +573,8 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
   }
 
   Widget _buildBlock(EditorBlock editorBlock, int i) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (editorBlock.type == BlockType.image) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -582,10 +589,12 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
               right: 6,
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
+                style: IconButton.styleFrom(backgroundColor: Colors.black87),
                 onPressed: () {
                   setState(() {
                     final file = editorBlock.image!;
-                    ImagePersistenceHelper.deleteImage(file.path);
+                    final filename = file.path.split('/').last;
+                    ImagePersistenceHelper.deleteImage(filename);
                     _blocks.removeAt(i);
 
                     if (_blocks.isEmpty) {
@@ -605,7 +614,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       );
     }
 
-    // For bullet lists, show bullet indicator
     if (editorBlock.isBullet) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,7 +622,10 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
             padding: const EdgeInsets.only(top: 12, right: 8),
             child: Text(
               '•',
-              style: _style(editorBlock).copyWith(fontWeight: FontWeight.bold),
+              style: _style(editorBlock).copyWith(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ),
           Expanded(
@@ -622,9 +633,14 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
               controller: editorBlock.controller,
               readOnly: editorBlock.readOnly,
               maxLines: null,
-              style: _style(editorBlock),
-              decoration: const InputDecoration(
+              style: _style(
+                editorBlock,
+              ).copyWith(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
                 hintText: 'List item...',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                ),
                 border: InputBorder.none,
               ),
               onTap: () => _setActive(i),
@@ -636,7 +652,6 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
     }
 
     if (editorBlock.isNumbered) {
-      // Calculate the actual number based on previous numbered items
       int number = 1;
       for (int j = 0; j < i; j++) {
         if (_blocks[j].isNumbered) number++;
@@ -651,9 +666,10 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
               width: 24,
               child: Text(
                 '$number.',
-                style: _style(
-                  editorBlock,
-                ).copyWith(fontWeight: FontWeight.bold),
+                style: _style(editorBlock).copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
             ),
           ),
@@ -662,9 +678,14 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
               controller: editorBlock.controller,
               readOnly: editorBlock.readOnly,
               maxLines: null,
-              style: _style(editorBlock),
-              decoration: const InputDecoration(
+              style: _style(
+                editorBlock,
+              ).copyWith(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
                 hintText: 'List item...',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                ),
                 border: InputBorder.none,
               ),
               onTap: () => _setActive(i),
@@ -679,9 +700,14 @@ class _CreateArticleScreenState extends ConsumerState<CreateArticleScreen> {
       controller: editorBlock.controller,
       readOnly: editorBlock.readOnly,
       maxLines: null,
-      style: _style(editorBlock),
-      decoration: const InputDecoration(
+      style: _style(
+        editorBlock,
+      ).copyWith(color: isDark ? Colors.white : Colors.black87),
+      decoration: InputDecoration(
         hintText: 'Tell your story...',
+        hintStyle: TextStyle(
+          color: isDark ? Colors.grey[600] : Colors.grey[400],
+        ),
         border: InputBorder.none,
       ),
       onTap: () => _setActive(i),

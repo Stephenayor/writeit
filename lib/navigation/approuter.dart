@@ -5,11 +5,14 @@ import 'package:writeit/presentation/auth/signup/signup_screen.dart';
 import 'package:writeit/presentation/home/home_screen.dart';
 import 'package:writeit/presentation/profile/edit_profile_screen.dart';
 import 'package:writeit/presentation/profile/profile_screen.dart';
+import 'package:writeit/presentation/publish/create/create_article_v2.dart';
 import 'package:writeit/presentation/publish/create_article_screen.dart';
 import 'package:writeit/presentation/publish/drafts/drafts_list_screen.dart';
 import '../core/utils/routes.dart';
 import '../data/models/article.dart';
 import '../presentation/category/select_category_screen.dart';
+import '../presentation/deeplink/article_deeplink_handler.dart';
+import '../presentation/deeplink/article_detail_by_id_screen.dart';
 import '../presentation/notifications/notifications_screen.dart';
 import '../presentation/publish/detail/article_detail_screen.dart';
 import '../presentation/publish/publish_preview_screen.dart';
@@ -36,7 +39,9 @@ final router = GoRouter(
     GoRoute(
       path: Routes.signIn,
       name: 'sign-in',
-      builder: (context, state) => const SigninScreen(),
+      builder: (context, state) {
+        return SigninScreen(extra: state.extra);
+      },
     ),
     GoRoute(
       path: Routes.draftsListScreen,
@@ -55,6 +60,16 @@ final router = GoRouter(
           existingContent: data?['content'],
           existingImages: data?['images'],
         );
+      },
+    ),
+
+    GoRoute(
+      path: Routes.createArticleScreenV2,
+      name: 'create-article-v2',
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>?;
+
+        return CreateArticleV2Screen();
       },
     ),
 
@@ -104,6 +119,21 @@ final router = GoRouter(
     GoRoute(
       path: Routes.notificationsScreen,
       builder: (_, __) => NotificationScreen(),
+    ),
+    GoRoute(
+      path: '/article/:id', // Deep link route
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ArticleDeepLinkHandler(articleId: id);
+      },
+    ),
+
+    GoRoute(
+      path: '/article/:id/read', // Authenticated article view
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ArticleDetailByIdScreen(articleId: id);
+      },
     ),
 
     // Shell route for screens with bottom navigation
