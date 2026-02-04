@@ -292,7 +292,8 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         isLast: true,
                         onTap: () {
-                          _showThemeDialog(context);
+                          // Show theme dialog here
+                          // _showThemeDialog(context);
                         },
                       ),
                     ],
