@@ -1,16 +1,22 @@
-# writeit
+# WriteIt 📖
 
-A new Flutter project.
+A mobile-first publishing platform inspired by Medium, built with Flutter.
+Designed for writers and readers who value clean reading, collaboration, and engagement.
 
-## Getting Started
+## 🧠 About
 
-This project is a starting point for a Flutter application.
+WriteIt is a production-grade publishing mobile application that allows users to:
+- Write and publish articles
+- Read long-form content in a clean, distraction-free UI
+- Engage via comments and likes
+- Collaborate with other writers
 
-A few resources to get you started if this is your first Flutter project:
+The app is optimized for mobile-first writing and reading experiences and is built with scalability and maintainability in mind.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 📸 Screenshots
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| Home Feed | Article Detail | Comments |
+|----------|---------------|----------|
+| ![](screenshots/home.png) | ![](screenshots/article.png) | ![](screenshots/comments.png) |
+
+
