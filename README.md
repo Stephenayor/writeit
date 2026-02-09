@@ -42,5 +42,64 @@ The app is optimized for mobile-first writing and reading experiences and is bui
   </tr>
 </table>
 
+## ✨ Features
+
+- 🔐 Firebase Authentication (Email / Google)
+- ✍️ Rich-text article creation
+- 📖 Clean article reading experience
+- ❤️ Likes / Claps system
+- 💬 Commenting with replies
+- 📊 Writer analytics (views, likes)
+- 🔄 Offline-friendly drafts
+
+## 🏗 Architecture
+
+- MVVM architecture
+- Repository pattern
+- Clean separation of UI, domain, and data layers
+- Firebase as backend (Auth, Firestore, Storage)
+
+State Management:
+- Riverpod / Provider / Bloc (choose what you used)
+
+Why MVVM?
+- Clear separation of concerns
+- Lifecycle-aware state management
+- Scales well as features grow
+
+
+## 🛠 Tech Stack
+
+- Flutter (Dart)
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Storage
+- Markdown rendering
+- REST-friendly architecture
+
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Flutter SDK (3.x)
+- Firebase project
+- Android Studio / VS Code
+
+### Installation
+```bash
+git clone https://github.com/Stephenayor/writeit.git
+cd writeit
+flutter pub get
+flutter run
+
+## 🛣 Roadmap
+
+- Collaborative writing
+- Writer monetization
+- Push notifications
+- Play Store release
+
+
+
 
 
